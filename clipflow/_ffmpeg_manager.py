@@ -22,11 +22,9 @@ import logging
 import os
 import platform
 import shutil
-import sys
-import tempfile
 import zipfile
 from pathlib import Path
-from urllib.request import urlopen, urlretrieve
+from urllib.request import urlretrieve
 
 log = logging.getLogger("clipflow")
 
@@ -43,9 +41,7 @@ Machine = platform.machine()  # 'AMD64', 'x86_64', 'arm64', 'aarch64', etc.
 
 # Windows: Use Gyan.dev builds (most popular static builds for Windows)
 # These are updated regularly and include both ffmpeg and ffprobe
-FFMPEG_WINDOWS_URL = (
-    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-)
+FFMPEG_WINDOWS_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 
 # macOS: Use OSArch builds (static, no dependencies)
 FFMPEG_MACOS_URL = (
@@ -55,8 +51,7 @@ FFMPEG_MACOS_URL = (
 
 # Linux: Use John Van Sickle static builds
 FFMPEG_LINUX_URL = (
-    "https://johnvansickle.com/ffmpeg/releases/"
-    "ffmpeg-release-amd64-static.tar.xz"
+    "https://johnvansickle.com/ffmpeg/releases/" "ffmpeg-release-amd64-static.tar.xz"
 )
 
 # ---------------------------------------------------------------------------
@@ -105,15 +100,13 @@ def _download_file(url: str, dest: Path) -> None:
     log.info("Downloading FFmpeg from %s ...", url)
     log.info("Saving to %s", dest)
 
-    def _reporthook(block_num, block_size, total_size):
+    def _reporthook(block_num: int, block_size: int, total_size: int) -> None:
         downloaded = block_num * block_size
         if total_size > 0:
             pct = min(downloaded / total_size * 100, 100)
             mb_down = downloaded / (1024 * 1024)
             mb_total = total_size / (1024 * 1024)
-            log.debug(
-                "  %.1f MB / %.1f MB (%.0f%%)", mb_down, mb_total, pct
-            )
+            log.debug("  %.1f MB / %.1f MB (%.0f%%)", mb_down, mb_total, pct)
 
     try:
         urlretrieve(url, dest, _reporthook)
@@ -285,9 +278,8 @@ def ensure_ffmpeg() -> tuple[Path, Path]:
     """
     global _ffmpeg_path, _ffprobe_path, _is_initialized
 
-    if _is_initialized:
-        if _ffmpeg_path and _ffprobe_path:
-            return _ffmpeg_path, _ffprobe_path
+    if _is_initialized and _ffmpeg_path and _ffprobe_path:
+        return _ffmpeg_path, _ffprobe_path
 
     # Check if we already have cached binaries
     cached_ffmpeg = CACHE_DIR / "ffmpeg"
