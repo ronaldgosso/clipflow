@@ -9,6 +9,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-05
+
+### Added
+- **Google Colab support** — one-click notebook for running clipflow in the cloud
+  - Pre-configured with FFmpeg and all dependencies
+  - Sample usage with sample videos
+  - No local installation required
+  - Works on Windows, macOS, and Linux
+
+### Changed
+- Updated README with Colab badge and usage examples
+- Added `notebook.ipynb` with complete Colab workflow
+- Updated `CONTRIBUTING.md` with Colab contribution guidelines
+
+### Migration Guide
+For users upgrading from 0.2.0:
+- **No action required** — clipflow will automatically download FFmpeg on first use
+- If you already have FFmpeg on PATH, clipflow will still use your system installation
+- To pre-download FFmpeg: `import clipflow; clipflow.setup_ffmpeg()`
+
 ## [0.2.0] — 2026-04-04
 
 ### Added
