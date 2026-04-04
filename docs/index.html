@@ -1,39 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>clipflow — Python video trimming via ffmpeg</title>
-  <meta name="description" content="Trim, compress, and highlight video clips with a clean Python API. Zero dependencies. Powered by ffmpeg subprocess." />
+  <title>clipflow — Python video trimming via auto-managed ffmpeg</title>
+  <meta name="description"
+    content="Trim, compress, and highlight video clips with a clean Python API. FFmpeg auto-downloaded on first use. Zero manual setup." />
   <meta property="og:title" content="clipflow" />
-  <meta property="og:description" content="Python video trimming, compression & highlights via ffmpeg. Zero dependencies." />
+  <meta property="og:description"
+    content="Python video trimming, compression & highlights. FFmpeg auto-managed — zero setup required." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet" />
   <style>
     /* ── Reset & base ─────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:       #0b0b0b;
-      --bg2:      #111111;
-      --bg3:      #181818;
-      --surface:  #1e1e1e;
-      --border:   #2a2a2a;
-      --border2:  #333333;
-      --text:     #e8e8e8;
-      --muted:    #888888;
-      --faint:    #444444;
-      --amber:    #f5a623;
-      --amber2:   #c4811a;
-      --amber-bg: rgba(245,166,35,0.07);
-      --green:    #4caf7d;
-      --red:      #e05b5b;
-      --mono:     'IBM Plex Mono', monospace;
-      --sans:     'DM Sans', sans-serif;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { scroll-behavior: smooth; }
+    :root {
+      --bg: #0b0b0b;
+      --bg2: #111111;
+      --bg3: #181818;
+      --surface: #1e1e1e;
+      --border: #2a2a2a;
+      --border2: #333333;
+      --text: #e8e8e8;
+      --muted: #888888;
+      --faint: #444444;
+      --amber: #f5a623;
+      --amber2: #c4811a;
+      --amber-bg: rgba(245, 166, 35, 0.07);
+      --green: #4caf7d;
+      --red: #e05b5b;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       background: var(--bg);
@@ -62,13 +76,18 @@
     body::after {
       content: '';
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 3px;
       background: linear-gradient(90deg, transparent 0%, var(--amber) 30%, var(--amber) 32%, transparent 100%);
       z-index: 100;
     }
 
-    * { position: relative; z-index: 1; }
+    * {
+      position: relative;
+      z-index: 1;
+    }
 
     /* ── Nav ──────────────────────────────────────────────────────────── */
     nav {
@@ -77,7 +96,7 @@
       justify-content: space-between;
       padding: 1.25rem 3rem;
       border-bottom: 1px solid var(--border);
-      background: rgba(11,11,11,0.9);
+      background: rgba(11, 11, 11, 0.9);
       backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
@@ -91,7 +110,10 @@
       color: var(--text);
       letter-spacing: -0.02em;
     }
-    .nav-logo span { color: var(--amber); }
+
+    .nav-logo span {
+      color: var(--amber);
+    }
 
     .nav-links {
       display: flex;
@@ -99,6 +121,7 @@
       gap: 2rem;
       list-style: none;
     }
+
     .nav-links a {
       font-family: var(--mono);
       font-size: 0.75rem;
@@ -108,7 +131,10 @@
       text-transform: uppercase;
       transition: color 0.2s;
     }
-    .nav-links a:hover { color: var(--text); }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
 
     .nav-pip {
       display: inline-flex;
@@ -118,15 +144,16 @@
       font-size: 0.7rem;
       color: var(--amber);
       background: var(--amber-bg);
-      border: 1px solid rgba(245,166,35,0.25);
+      border: 1px solid rgba(245, 166, 35, 0.25);
       padding: 0.35rem 0.75rem;
       border-radius: 2px;
       text-decoration: none;
       transition: background 0.2s, border-color 0.2s;
     }
+
     .nav-pip:hover {
-      background: rgba(245,166,35,0.14);
-      border-color: rgba(245,166,35,0.5);
+      background: rgba(245, 166, 35, 0.14);
+      border-color: rgba(245, 166, 35, 0.5);
     }
 
     /* ── Hero ─────────────────────────────────────────────────────────── */
@@ -151,6 +178,7 @@
       align-items: center;
       gap: 0.75rem;
     }
+
     .hero-eyebrow::before {
       content: '';
       display: block;
@@ -168,6 +196,7 @@
       color: var(--text);
       margin-bottom: 1.5rem;
     }
+
     h1 em {
       font-style: normal;
       color: var(--amber);
@@ -205,7 +234,11 @@
       align-items: center;
       gap: 0.5rem;
     }
-    .btn-primary:hover { background: #f0c060; transform: translateY(-1px); }
+
+    .btn-primary:hover {
+      background: #f0c060;
+      transform: translateY(-1px);
+    }
 
     .btn-ghost {
       font-family: var(--mono);
@@ -223,7 +256,12 @@
       align-items: center;
       gap: 0.5rem;
     }
-    .btn-ghost:hover { color: var(--text); border-color: var(--faint); transform: translateY(-1px); }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--faint);
+      transform: translateY(-1px);
+    }
 
     /* ── Timecode widget ──────────────────────────────────────────────── */
     .timecode-wrap {
@@ -235,8 +273,15 @@
     }
 
     @keyframes fadeInRight {
-      from { opacity: 0; transform: translateX(20px); }
-      to   { opacity: 1; transform: translateX(0); }
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .timecode-display {
@@ -252,7 +297,7 @@
       border-radius: 2px;
       min-width: 340px;
       text-align: center;
-      text-shadow: 0 0 40px rgba(245,166,35,0.2);
+      text-shadow: 0 0 40px rgba(245, 166, 35, 0.2);
       user-select: none;
     }
 
@@ -274,6 +319,7 @@
       overflow: hidden;
       min-width: 340px;
     }
+
     .clip-progress-bar {
       height: 100%;
       background: var(--amber);
@@ -291,6 +337,7 @@
       border-radius: 2px;
       overflow: hidden;
     }
+
     .clip-item {
       display: flex;
       align-items: center;
@@ -304,26 +351,45 @@
       transition: background 0.2s;
       cursor: default;
     }
-    .clip-item:last-child { border-bottom: none; }
+
+    .clip-item:last-child {
+      border-bottom: none;
+    }
+
     .clip-item.active {
       background: var(--amber-bg);
       color: var(--text);
     }
-    .clip-item.done { color: var(--green); }
+
+    .clip-item.done {
+      color: var(--green);
+    }
+
     .clip-dot {
-      width: 6px; height: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--faint);
       flex-shrink: 0;
       transition: background 0.2s;
     }
-    .clip-item.active .clip-dot { background: var(--amber); }
-    .clip-item.done .clip-dot { background: var(--green); }
+
+    .clip-item.active .clip-dot {
+      background: var(--amber);
+    }
+
+    .clip-item.done .clip-dot {
+      background: var(--green);
+    }
+
     .clip-item .clip-range {
       margin-left: auto;
       opacity: 0.6;
     }
-    .clip-item.active .clip-range { opacity: 1; }
+
+    .clip-item.active .clip-range {
+      opacity: 1;
+    }
 
     /* ── Install strip ────────────────────────────────────────────────── */
     .install-strip {
@@ -332,6 +398,7 @@
       background: var(--bg2);
       padding: 1.25rem 3rem;
     }
+
     .install-inner {
       max-width: 1200px;
       margin: 0 auto;
@@ -339,6 +406,7 @@
       align-items: center;
       gap: 1.5rem;
     }
+
     .install-label {
       font-family: var(--mono);
       font-size: 0.65rem;
@@ -347,13 +415,19 @@
       color: var(--faint);
       flex-shrink: 0;
     }
+
     .install-cmd {
       font-family: var(--mono);
       font-size: 0.9rem;
       color: var(--amber);
       flex: 1;
     }
-    .install-cmd .dollar { color: var(--faint); margin-right: 0.5rem; }
+
+    .install-cmd .dollar {
+      color: var(--faint);
+      margin-right: 0.5rem;
+    }
+
     .copy-btn {
       font-family: var(--mono);
       font-size: 0.65rem;
@@ -368,8 +442,16 @@
       transition: color 0.2s, border-color 0.2s;
       flex-shrink: 0;
     }
-    .copy-btn:hover { color: var(--text); border-color: var(--faint); }
-    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: var(--faint);
+    }
+
+    .copy-btn.copied {
+      color: var(--green);
+      border-color: var(--green);
+    }
 
     /* ── Sections ─────────────────────────────────────────────────────── */
     section {
@@ -389,6 +471,7 @@
       align-items: center;
       gap: 0.75rem;
     }
+
     .section-label::before {
       content: '';
       display: block;
@@ -432,7 +515,10 @@
       padding: 2rem 1.75rem;
       transition: background 0.2s;
     }
-    .feature-card:hover { background: var(--bg3); }
+
+    .feature-card:hover {
+      background: var(--bg3);
+    }
 
     .feature-icon {
       font-family: var(--mono);
@@ -440,7 +526,7 @@
       letter-spacing: 0.1em;
       color: var(--amber);
       background: var(--amber-bg);
-      border: 1px solid rgba(245,166,35,0.2);
+      border: 1px solid rgba(245, 166, 35, 0.2);
       padding: 0.3rem 0.6rem;
       border-radius: 2px;
       display: inline-block;
@@ -478,7 +564,10 @@
       overflow-x: auto;
       scrollbar-width: none;
     }
-    .code-tabs::-webkit-scrollbar { display: none; }
+
+    .code-tabs::-webkit-scrollbar {
+      display: none;
+    }
 
     .code-tab {
       font-family: var(--mono);
@@ -494,7 +583,11 @@
       white-space: nowrap;
       transition: color 0.2s;
     }
-    .code-tab:hover { color: var(--text); }
+
+    .code-tab:hover {
+      color: var(--text);
+    }
+
     .code-tab.active {
       color: var(--amber);
       border-bottom-color: var(--amber);
@@ -505,7 +598,10 @@
       padding: 1.75rem 2rem;
       overflow-x: auto;
     }
-    .code-panel.active { display: block; }
+
+    .code-panel.active {
+      display: block;
+    }
 
     pre {
       font-family: var(--mono);
@@ -517,13 +613,42 @@
     }
 
     /* Syntax highlight colours */
-    .kw  { color: #c792ea; }   /* keywords */
-    .fn  { color: #82aaff; }   /* functions / methods */
-    .st  { color: #c3e88d; }   /* strings */
-    .cm  { color: var(--faint); font-style: italic; } /* comments */
-    .nb  { color: var(--amber); }  /* builtins / names */
-    .nm  { color: #f78c6c; }   /* numbers */
-    .pu  { color: var(--muted); }  /* punctuation */
+    .kw {
+      color: #c792ea;
+    }
+
+    /* keywords */
+    .fn {
+      color: #82aaff;
+    }
+
+    /* functions / methods */
+    .st {
+      color: #c3e88d;
+    }
+
+    /* strings */
+    .cm {
+      color: var(--faint);
+      font-style: italic;
+    }
+
+    /* comments */
+    .nb {
+      color: var(--amber);
+    }
+
+    /* builtins / names */
+    .nm {
+      color: #f78c6c;
+    }
+
+    /* numbers */
+    .pu {
+      color: var(--muted);
+    }
+
+    /* punctuation */
 
     /* ── CLI section ──────────────────────────────────────────────────── */
     .cli-grid {
@@ -548,12 +673,14 @@
       align-items: center;
       gap: 0.5rem;
     }
+
     .cli-cmd-name {
       font-family: var(--mono);
       font-size: 0.72rem;
       color: var(--amber);
       font-weight: 500;
     }
+
     .cli-cmd-desc {
       font-family: var(--mono);
       font-size: 0.65rem;
@@ -564,16 +691,32 @@
     .cli-body {
       padding: 1.25rem 1.25rem;
     }
+
     .cli-body pre {
       font-size: 0.76rem;
       line-height: 1.8;
       color: var(--muted);
     }
-    .cli-body pre .dollar { color: var(--faint); }
-    .cli-body pre .cmd   { color: var(--amber); }
-    .cli-body pre .arg   { color: var(--text); }
-    .cli-body pre .flag  { color: #82aaff; }
-    .cli-body pre .val   { color: #c3e88d; }
+
+    .cli-body pre .dollar {
+      color: var(--faint);
+    }
+
+    .cli-body pre .cmd {
+      color: var(--amber);
+    }
+
+    .cli-body pre .arg {
+      color: var(--text);
+    }
+
+    .cli-body pre .flag {
+      color: #82aaff;
+    }
+
+    .cli-body pre .val {
+      color: #c3e88d;
+    }
 
     /* ── API reference table ──────────────────────────────────────────── */
     .api-table {
@@ -586,10 +729,12 @@
       border-radius: 2px;
       overflow: hidden;
     }
+
     .api-table thead tr {
       background: var(--bg3);
       border-bottom: 1px solid var(--border2);
     }
+
     .api-table th {
       text-align: left;
       padding: 0.65rem 1rem;
@@ -599,19 +744,43 @@
       color: var(--faint);
       font-weight: 500;
     }
+
     .api-table td {
       padding: 0.65rem 1rem;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
       line-height: 1.5;
     }
-    .api-table tr:last-child td { border-bottom: none; }
-    .api-table tr { background: var(--bg2); }
-    .api-table tr:nth-child(even) { background: var(--bg3); }
-    .api-table .param { color: var(--amber); }
-    .api-table .type  { color: #82aaff; }
-    .api-table .desc  { color: var(--muted); font-family: var(--sans); font-size: 0.8rem; }
-    .api-table .default { color: var(--faint); }
+
+    .api-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .api-table tr {
+      background: var(--bg2);
+    }
+
+    .api-table tr:nth-child(even) {
+      background: var(--bg3);
+    }
+
+    .api-table .param {
+      color: var(--amber);
+    }
+
+    .api-table .type {
+      color: #82aaff;
+    }
+
+    .api-table .desc {
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.8rem;
+    }
+
+    .api-table .default {
+      color: var(--faint);
+    }
 
     /* ── Divider ──────────────────────────────────────────────────────── */
     .section-divider {
@@ -619,6 +788,7 @@
       margin: 0 auto;
       padding: 0 3rem;
     }
+
     .section-divider hr {
       border: none;
       border-top: 1px solid var(--border);
@@ -635,21 +805,25 @@
       overflow: hidden;
       margin-top: 2rem;
     }
+
     .preset-card {
       background: var(--bg2);
       padding: 1.5rem;
     }
+
     .preset-name {
       font-family: var(--mono);
       font-size: 0.8rem;
       color: var(--amber);
       margin-bottom: 0.5rem;
     }
+
     .preset-attrs {
       display: flex;
       flex-direction: column;
       gap: 0.2rem;
     }
+
     .preset-attr {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -657,7 +831,10 @@
       display: flex;
       justify-content: space-between;
     }
-    .preset-attr span:last-child { color: var(--text); }
+
+    .preset-attr span:last-child {
+      color: var(--text);
+    }
 
     /* ── Footer ───────────────────────────────────────────────────────── */
     footer {
@@ -665,6 +842,7 @@
       background: var(--bg2);
       padding: 2.5rem 3rem;
     }
+
     .footer-inner {
       max-width: 1200px;
       margin: 0 auto;
@@ -674,18 +852,24 @@
       gap: 2rem;
       flex-wrap: wrap;
     }
+
     .footer-logo {
       font-family: var(--mono);
       font-size: 0.85rem;
       font-weight: 500;
       color: var(--muted);
     }
-    .footer-logo span { color: var(--amber); }
+
+    .footer-logo span {
+      color: var(--amber);
+    }
+
     .footer-links {
       display: flex;
       gap: 2rem;
       list-style: none;
     }
+
     .footer-links a {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -693,7 +877,11 @@
       text-decoration: none;
       transition: color 0.2s;
     }
-    .footer-links a:hover { color: var(--muted); }
+
+    .footer-links a:hover {
+      color: var(--muted);
+    }
+
     .footer-byline {
       font-size: 0.75rem;
       color: var(--faint);
@@ -706,6 +894,7 @@
       transform: translateY(16px);
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
+
     .reveal.visible {
       opacity: 1;
       transform: none;
@@ -713,21 +902,62 @@
 
     /* ── Responsive ───────────────────────────────────────────────────── */
     @media (max-width: 900px) {
-      nav { padding: 1rem 1.5rem; }
-      .nav-links { display: none; }
-      .hero { grid-template-columns: 1fr; padding: 4rem 1.5rem 3rem; gap: 3rem; }
-      .timecode-wrap { align-items: flex-start; }
-      .timecode-display, .clip-progress, .clip-list { min-width: unset; width: 100%; }
-      .install-strip { padding: 1rem 1.5rem; }
-      section { padding: 3.5rem 1.5rem; }
-      .feature-grid { grid-template-columns: 1fr; }
-      .cli-grid { grid-template-columns: 1fr; }
-      .preset-grid { grid-template-columns: 1fr; }
-      .section-divider { padding: 0 1.5rem; }
-      footer { padding: 2rem 1.5rem; }
+      nav {
+        padding: 1rem 1.5rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 4rem 1.5rem 3rem;
+        gap: 3rem;
+      }
+
+      .timecode-wrap {
+        align-items: flex-start;
+      }
+
+      .timecode-display,
+      .clip-progress,
+      .clip-list {
+        min-width: unset;
+        width: 100%;
+      }
+
+      .install-strip {
+        padding: 1rem 1.5rem;
+      }
+
+      section {
+        padding: 3.5rem 1.5rem;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cli-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-divider {
+        padding: 0 1.5rem;
+      }
+
+      footer {
+        padding: 2rem 1.5rem;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- ── Nav ──────────────────────────────────────────────────────────── -->
@@ -741,18 +971,18 @@
       <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
     </ul>
     <a class="nav-pip" href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">
-      PyPI v0.1.0
+      PyPI v0.2.0
     </a>
   </nav>
 
   <!-- ── Hero ─────────────────────────────────────────────────────────── -->
   <div class="hero">
     <div>
-      <div class="hero-eyebrow">Python · ffmpeg · zero dependencies</div>
+      <div class="hero-eyebrow">Python · auto-managed ffmpeg · zero setup</div>
       <h1>clip<em>flow</em></h1>
       <p class="hero-sub">
         Trim, compress, and highlight video clips with a clean, typed Python API.
-        Powered by ffmpeg subprocess — no heavy libraries, no re-inventing the wheel.
+        FFmpeg binaries auto-downloaded on first use — no manual installation, no configuration.
       </p>
       <div class="hero-actions">
         <a href="#api" class="btn-primary">↓ Quick start</a>
@@ -798,7 +1028,7 @@
       <span class="install-cmd"><span class="dollar">$</span>pip install clipflow</span>
       <button class="copy-btn" id="copyBtn" onclick="copyInstall()">copy</button>
       <span class="install-label" style="margin-left:1.5rem;">Requires</span>
-      <span class="install-cmd" style="color:var(--muted);">Python ≥ 3.9 &nbsp;·&nbsp; ffmpeg on PATH</span>
+      <span class="install-cmd" style="color:var(--muted);">Python ≥ 3.9 &nbsp;·&nbsp; FFmpeg auto-installed ✨</span>
     </div>
   </div>
 
@@ -810,39 +1040,61 @@
     </div>
     <div class="feature-grid reveal">
       <div class="feature-card">
+        <div class="feature-icon">✨ AUTO</div>
+        <div class="feature-title">FFmpeg auto-managed</div>
+        <div class="feature-desc">No manual installation. On first use, clipflow detects your platform, downloads the
+          right binaries from trusted sources, and caches them locally. Windows, macOS, Linux — all supported.</div>
+      </div>
+      <div class="feature-card">
         <div class="feature-icon">TRIM</div>
         <div class="feature-title">Lossless stream-copy</div>
-        <div class="feature-desc">Default mode. <code style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-ss</code> before <code style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-i</code> for a fast keyframe seek. No re-encoding, no quality loss, finished in seconds.</div>
+        <div class="feature-desc">Default mode. <code
+            style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-ss</code> before <code
+            style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-i</code> for a fast keyframe seek. No
+          re-encoding, no quality loss, finished in seconds.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">COMPRESS</div>
         <div class="feature-title">CRF re-encode</div>
-        <div class="feature-desc">Three named presets — <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">COMPRESS_LOW / MEDIUM / HIGH</code> — or supply any CRF value and codec directly.</div>
+        <div class="feature-desc">Three named presets — <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">COMPRESS_LOW / MEDIUM / HIGH</code> — or
+          supply any CRF value and codec directly.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">HIGHLIGHT ★</div>
         <div class="feature-title">Highlight routing</div>
-        <div class="feature-desc">Mark any <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">ClipSpec</code> with <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">highlight=True</code>. Finished clips are copied to <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">output/highlights/</code> automatically — no second encode.</div>
+        <div class="feature-desc">Mark any <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">ClipSpec</code> with <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">highlight=True</code>. Finished clips are
+          copied to <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">output/highlights/</code>
+          automatically — no second encode.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">ASPECT</div>
         <div class="feature-title">Aspect ratio crop</div>
-        <div class="feature-desc">Crop and pad to 16:9, 9:16, 1:1, 4:3, or any custom ratio. Centred crop, even-dimension safe, applied as a single ffmpeg filter chain.</div>
+        <div class="feature-desc">Crop and pad to 16:9, 9:16, 1:1, 4:3, or any custom ratio. Centred crop,
+          even-dimension safe, applied as a single ffmpeg filter chain.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">INSPECT</div>
         <div class="feature-title">Video metadata</div>
-        <div class="feature-desc">Duration, resolution, fps, codec, file size — returned as a typed <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">VideoInfo</code> dataclass via ffprobe. Works on any format ffmpeg supports.</div>
+        <div class="feature-desc">Duration, resolution, fps, codec, file size — returned as a typed <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">VideoInfo</code> dataclass via ffprobe.
+          Works on any format ffmpeg supports.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">BATCH</div>
         <div class="feature-title">Batch processing</div>
-        <div class="feature-desc">Process multiple source files in one call via <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">batch()</code>, or drive it from a JSON spec file with the CLI.</div>
+        <div class="feature-desc">Process multiple source files in one call via <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">batch()</code>, or drive it from a JSON
+          spec file with the CLI.</div>
       </div>
     </div>
   </section>
 
-  <div class="section-divider"><hr /></div>
+  <div class="section-divider">
+    <hr />
+  </div>
 
   <!-- ── API ───────────────────────────────────────────────────────────── -->
   <section id="api">
@@ -862,7 +1114,7 @@
       </div>
 
       <div class="code-panel active" id="tab-trim">
-<pre><span class="kw">import</span> clipflow
+        <pre><span class="kw">import</span> clipflow
 <span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">parse_range</span>
 
 <span class="cm"># ── lossless stream-copy (default, fastest) ──────────────────────</span>
@@ -888,7 +1140,7 @@ clipflow.<span class="fn">trim</span><span class="pu">(</span><span class="st">"
       </div>
 
       <div class="code-panel" id="tab-compress">
-<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">CompressOptions</span>, <span class="nb">COMPRESS_HIGH</span>, <span class="fn">parse_range</span>
+        <pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">CompressOptions</span>, <span class="nb">COMPRESS_HIGH</span>, <span class="fn">parse_range</span>
 
 <span class="cm"># ── named preset (easiest) ────────────────────────────────────────</span>
 clip <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
@@ -910,7 +1162,7 @@ clip2 <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu"
       </div>
 
       <div class="code-panel" id="tab-highlight">
-<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">COMPRESS_MEDIUM</span>, <span class="fn">parse_range</span>
+        <pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">COMPRESS_MEDIUM</span>, <span class="fn">parse_range</span>
 <span class="kw">import</span> clipflow
 
 clips <span class="pu">= [</span>
@@ -933,7 +1185,7 @@ results <span class="pu">=</span> clipflow.<span class="fn">trim</span><span cla
       </div>
 
       <div class="code-panel" id="tab-aspect">
-<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">AR_9_16</span>, <span class="nb">AR_16_9</span>, <span class="nb">AspectRatio</span>, <span class="fn">parse_range</span>
+        <pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">AR_9_16</span>, <span class="nb">AR_16_9</span>, <span class="nb">AspectRatio</span>, <span class="fn">parse_range</span>
 
 <span class="cm"># ── named shortcuts ───────────────────────────────────────────────</span>
 vertical <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
@@ -955,7 +1207,7 @@ ultra <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu"
       </div>
 
       <div class="code-panel" id="tab-inspect">
-<pre><span class="kw">import</span> clipflow
+        <pre><span class="kw">import</span> clipflow
 
 info <span class="pu">=</span> clipflow.<span class="fn">inspect</span><span class="pu">(</span><span class="st">"documentary.mp4"</span><span class="pu">)</span>
 
@@ -972,7 +1224,7 @@ info <span class="pu">=</span> clipflow.<span class="fn">inspect</span><span cla
       </div>
 
       <div class="code-panel" id="tab-batch">
-<pre><span class="kw">from</span> pathlib <span class="kw">import</span> <span class="nb">Path</span>
+        <pre><span class="kw">from</span> pathlib <span class="kw">import</span> <span class="nb">Path</span>
 <span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">BatchSpec</span>, <span class="nb">ClipSpec</span>, <span class="fn">parse_range</span>
 <span class="kw">import</span> clipflow
 
@@ -1001,7 +1253,9 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
     </div>
   </section>
 
-  <div class="section-divider"><hr /></div>
+  <div class="section-divider">
+    <hr />
+  </div>
 
   <!-- ── CLI ───────────────────────────────────────────────────────────── -->
   <section id="cli">
@@ -1016,7 +1270,7 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
           <span class="cli-cmd-desc">extract segments</span>
         </div>
         <div class="cli-body">
-<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">lecture.mp4</span> <span class="val">01:00-02:30</span>
+          <pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">lecture.mp4</span> <span class="val">01:00-02:30</span>
 
 <span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">lecture.mp4</span> <span class="val">00:00-01:00</span> <span class="val">10:30-12:00</span> \
     <span class="flag">--output</span> <span class="val">clips/</span>
@@ -1036,7 +1290,7 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
           <span class="cli-cmd-desc">video metadata</span>
         </div>
         <div class="cli-body">
-<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">inspect</span> <span class="val">documentary.mp4</span>
+          <pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">inspect</span> <span class="val">documentary.mp4</span>
 
   <span style="color:var(--text)">documentary.mp4</span>
   ────────────────────────────────────
@@ -1056,7 +1310,7 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
           <span class="cli-cmd-desc">JSON-driven batch</span>
         </div>
         <div class="cli-body">
-<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">batch</span> <span class="val">spec.json</span>
+          <pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">batch</span> <span class="val">spec.json</span>
 
 <span class="cm"># spec.json</span>
 <span class="pu">[{</span>
@@ -1076,7 +1330,7 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
           <span class="cli-cmd-desc">accepted everywhere</span>
         </div>
         <div class="cli-body">
-<pre><span class="cm"># All of these are equivalent</span>
+          <pre><span class="cm"># All of these are equivalent</span>
 <span class="val">01:30</span>       <span class="cm"># MM:SS → 90 seconds</span>
 <span class="val">00:01:30</span>    <span class="cm"># HH:MM:SS → 90 seconds</span>
 <span class="val">90</span>          <span class="cm"># plain integer seconds</span>
@@ -1091,7 +1345,9 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
     </div>
   </section>
 
-  <div class="section-divider"><hr /></div>
+  <div class="section-divider">
+    <hr />
+  </div>
 
   <!-- ── Reference ─────────────────────────────────────────────────────── -->
   <section id="reference">
@@ -1219,14 +1475,17 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
   <!-- ── Footer ────────────────────────────────────────────────────────── -->
   <footer>
     <div class="footer-inner">
-      <div class="footer-logo">clip<span>flow</span> <span style="color:var(--faint);margin-left:0.5rem;font-size:0.75rem;">v0.1.0</span></div>
+      <div class="footer-logo">clip<span>flow</span> <span
+          style="color:var(--faint);margin-left:0.5rem;font-size:0.75rem;">v0.2.0</span></div>
       <ul class="footer-links">
         <li><a href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">PyPI ↗</a></li>
         <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
-        <li><a href="https://github.com/ronaldgosso/clipflow/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog ↗</a></li>
+        <li><a href="https://github.com/ronaldgosso/clipflow/blob/main/CHANGELOG.md" target="_blank"
+            rel="noopener">Changelog ↗</a></li>
         <li><a href="https://github.com/ronaldgosso/clipflow/issues" target="_blank" rel="noopener">Issues ↗</a></li>
       </ul>
-      <div class="footer-byline">MIT © <a href="https://github.com/ronaldgosso" style="color:var(--faint);text-decoration:none;" target="_blank" rel="noopener">Ronald Isack Gosso</a></div>
+      <div class="footer-byline">MIT © 2025–2026 <a href="https://github.com/ronaldgosso"
+          style="color:var(--faint);text-decoration:none;" target="_blank" rel="noopener">Ronald Isack Gosso</a></div>
     </div>
   </footer>
 
@@ -1251,10 +1510,10 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
 
     /* ── Timecode animation ───────────────────────────────────────── */
     const clips = [
-      { label: 'intro',       start: 0,    end: 60,   idx: 0 },
-      { label: 'key_moment ★', start: 300, end: 390,  idx: 1 },
+      { label: 'intro', start: 0, end: 60, idx: 0 },
+      { label: 'key_moment ★', start: 300, end: 390, idx: 1 },
       { label: 'vertical_short', start: 600, end: 630, idx: 2 },
-      { label: 'outro',       start: 3510, end: 3600, idx: 3 },
+      { label: 'outro', start: 3510, end: 3600, idx: 3 },
     ];
     let clipIdx = 0, simTime = 0, rafId;
     const SPEED = 8; // playback speed multiplier
@@ -1279,7 +1538,7 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
         clipIdx = (clipIdx + 1) % clips.length;
         if (clipIdx === 0) {
           // reset all
-          document.querySelectorAll('.clip-item').forEach(el => el.classList.remove('done','active'));
+          document.querySelectorAll('.clip-item').forEach(el => el.classList.remove('done', 'active'));
         }
         simTime = clips[clipIdx].start;
         document.querySelector(`[data-idx="${clipIdx}"]`).classList.add('active');
@@ -1298,4 +1557,5 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   </script>
 </body>
+
 </html>
