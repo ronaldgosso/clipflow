@@ -1,16 +1,88 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "clipflow"
 version = "0.1.0"
-description = "A clean Python wrapper for ffmpeg clipping and processing"
+description = "Trim, compress, and highlight video clips — powered by ffmpeg subprocess"
 readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Ronald Isack Gosso", email = "ronaldgosso@gmail.com" }]
+keywords = [
+    "video", "ffmpeg", "video-trimming", "video-compression",
+    "highlight", "clip", "video-editing", "python-video",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Video :: Conversion",
+    "Typing :: Typed",
+]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = []  # zero runtime dependencies — only stdlib + system ffmpeg
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "black>=24.0",
+    "mypy>=1.9",
 ]
+
+[project.scripts]
+clipflow = "clipflow.cli:main"
+
+[project.urls]
+Homepage = "https://ronaldgosso.github.io/clipflow"
+Repository = "https://github.com/ronaldgosso/clipflow"
+"Bug Tracker" = "https://github.com/ronaldgosso/clipflow/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["clipflow*"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+# ---------------------------------------------------------------------------
+# Black
+# ---------------------------------------------------------------------------
+
+[tool.black]
+target-version = ["py39"]
+line-length = 88
+
+# ---------------------------------------------------------------------------
+# mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
