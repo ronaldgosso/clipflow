@@ -35,6 +35,7 @@ from clipflow.parser import parse_range, parse_seconds
 # Parser
 # ===========================================================================
 
+
 class TestParseSeconds:
     def test_plain_int(self):
         assert parse_seconds(90) == 90.0
@@ -98,6 +99,7 @@ class TestParseRange:
 # Models
 # ===========================================================================
 
+
 class TestTimeRange:
     def test_duration(self):
         r = TimeRange(start=60.0, end=90.0)
@@ -152,11 +154,14 @@ class TestClipSpec:
 # FFmpeg command builder (no subprocess)
 # ===========================================================================
 
+
 class TestBuildTrimCommand:
     def test_stream_copy_no_compress(self):
         cmd = _build_trim_command(
-            Path("in.mp4"), Path("out.mp4"),
-            start=60.0, duration=30.0,
+            Path("in.mp4"),
+            Path("out.mp4"),
+            start=60.0,
+            duration=30.0,
         )
         assert "-c" in cmd
         copy_idx = cmd.index("-c")
@@ -168,9 +173,13 @@ class TestBuildTrimCommand:
 
     def test_compress_mode_seek_after_input(self):
         cmd = _build_trim_command(
-            Path("in.mp4"), Path("out.mp4"),
-            start=60.0, duration=30.0,
-            crf=23, preset="medium", codec="libx264",
+            Path("in.mp4"),
+            Path("out.mp4"),
+            start=60.0,
+            duration=30.0,
+            crf=23,
+            preset="medium",
+            codec="libx264",
         )
         # seek must come after -i in re-encode mode
         i_idx = cmd.index("-i")
@@ -179,9 +188,13 @@ class TestBuildTrimCommand:
 
     def test_compress_flags_present(self):
         cmd = _build_trim_command(
-            Path("in.mp4"), Path("out.mp4"),
-            start=0.0, duration=60.0,
-            crf=18, preset="slow", codec="libx265",
+            Path("in.mp4"),
+            Path("out.mp4"),
+            start=0.0,
+            duration=60.0,
+            crf=18,
+            preset="slow",
+            codec="libx265",
         )
         assert "-crf" in cmd
         assert cmd[cmd.index("-crf") + 1] == "18"
@@ -190,9 +203,13 @@ class TestBuildTrimCommand:
 
     def test_audio_bitrate(self):
         cmd = _build_trim_command(
-            Path("in.mp4"), Path("out.mp4"),
-            start=0.0, duration=30.0,
-            crf=23, preset="medium", codec="libx264",
+            Path("in.mp4"),
+            Path("out.mp4"),
+            start=0.0,
+            duration=30.0,
+            crf=23,
+            preset="medium",
+            codec="libx264",
             audio_bitrate="192k",
         )
         assert "-b:a" in cmd
@@ -244,6 +261,7 @@ FAKE_PROBE = {
 
 def _make_fake_run(returncode: int = 0):
     """Return a subprocess.run replacement that does nothing harmful."""
+
     def fake_run(cmd, *, check, capture_output=False, text=False):
         mock = MagicMock()
         mock.returncode = returncode
@@ -252,6 +270,7 @@ def _make_fake_run(returncode: int = 0):
         if check and returncode != 0:
             raise subprocess.CalledProcessError(returncode, cmd)
         return mock
+
     return fake_run
 
 
@@ -271,9 +290,7 @@ class TestTrimAPI:
             patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
             patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffprobe"),
         ):
-            results = clipflow.trim(
-                tmp_video, spec, output_dir=tmp_path / "out"
-            )
+            results = clipflow.trim(tmp_video, spec, output_dir=tmp_path / "out")
 
         assert len(results) == 1
         assert results[0].ok
@@ -313,8 +330,7 @@ class TestTrimAPI:
 
     def test_multiple_clips(self, tmp_video: Path, tmp_path: Path):
         clips = [
-            ClipSpec(parse_range("00:00", "01:00"), label=f"clip_{i}")
-            for i in range(3)
+            ClipSpec(parse_range("00:00", "01:00"), label=f"clip_{i}") for i in range(3)
         ]
         with (
             patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
@@ -335,7 +351,9 @@ class TestTrimAPI:
             patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
             patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
         ):
-            clipflow.trim(tmp_video, clips, output_dir=tmp_path / "out", on_progress=on_prog)
+            clipflow.trim(
+                tmp_video, clips, output_dir=tmp_path / "out", on_progress=on_prog
+            )
 
         assert progress_calls == [(1, 2), (2, 2)]
 
@@ -357,6 +375,7 @@ class TestTrimAPI:
 # ===========================================================================
 # core.inspect (subprocess mocked)
 # ===========================================================================
+
 
 class TestInspectAPI:
     def test_returns_video_info(self, tmp_video: Path):
@@ -383,6 +402,7 @@ class TestInspectAPI:
 # ===========================================================================
 # Public API surface check
 # ===========================================================================
+
 
 class TestPublicAPI:
     def test_all_exports_present(self):

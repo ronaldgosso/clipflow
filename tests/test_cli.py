@@ -38,6 +38,7 @@ from clipflow.models import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def tmp_video(tmp_path: Path) -> Path:
     v = tmp_path / "sample.mp4"
@@ -73,6 +74,7 @@ def _make_info(path: Path) -> VideoInfo:
 # _parse_aspect
 # ---------------------------------------------------------------------------
 
+
 class TestParseAspect:
     def test_none_returns_none(self):
         assert _parse_aspect(None) is None
@@ -99,6 +101,7 @@ class TestParseAspect:
 # ---------------------------------------------------------------------------
 # Parser structure
 # ---------------------------------------------------------------------------
+
 
 class TestParserStructure:
     def test_version_flag(self, capsys: pytest.CaptureFixture[str]):
@@ -160,6 +163,7 @@ class TestParserStructure:
 # ---------------------------------------------------------------------------
 # _cmd_trim
 # ---------------------------------------------------------------------------
+
 
 class TestCmdTrim:
     def _args(self, tmp_video: Path, ranges: list[str], **kwargs) -> argparse.Namespace:
@@ -265,7 +269,9 @@ class TestCmdTrim:
 
         assert len(captured_clips) == 3
 
-    def test_on_progress_callback_fires(self, tmp_video: Path, capsys: pytest.CaptureFixture[str]):
+    def test_on_progress_callback_fires(
+        self, tmp_video: Path, capsys: pytest.CaptureFixture[str]
+    ):
         args = self._args(tmp_video, ["00:00-01:00"])
 
         def fake_trim(path, clips, *, output_dir, on_progress=None):
@@ -308,6 +314,7 @@ class TestCmdTrim:
 # _cmd_inspect
 # ---------------------------------------------------------------------------
 
+
 class TestCmdInspect:
     def _args(self, path: Path, as_json: bool = False) -> argparse.Namespace:
         return argparse.Namespace(input=str(path), json=as_json)
@@ -326,7 +333,7 @@ class TestCmdInspect:
         assert rc == 0
         raw = capsys.readouterr().out
         # Strip any non-JSON banner lines, find the JSON block
-        json_start = raw.find('{')
+        json_start = raw.find("{")
         data = json.loads(raw[json_start:])
         assert data["width"] == 1920
         assert data["video_codec"] == "h264"
@@ -338,7 +345,9 @@ class TestCmdInspect:
         assert rc == 1
 
     def test_inspect_error_returns_1(self, tmp_video: Path):
-        with patch("clipflow.cli.clipflow.inspect", side_effect=RuntimeError("ffprobe missing")):
+        with patch(
+            "clipflow.cli.clipflow.inspect", side_effect=RuntimeError("ffprobe missing")
+        ):
             rc = _cmd_inspect(self._args(tmp_video))
         assert rc == 1
 
@@ -347,6 +356,7 @@ class TestCmdInspect:
 # _parse_batch_json + _cmd_batch
 # ---------------------------------------------------------------------------
 
+
 class TestBatchJson:
     def _write_spec(self, tmp_path: Path, data: object) -> Path:
         p = tmp_path / "spec.json"
@@ -354,16 +364,19 @@ class TestBatchJson:
         return p
 
     def test_valid_spec_parses(self, tmp_path: Path):
-        spec_path = self._write_spec(tmp_path, [
-            {
-                "input": "video.mp4",
-                "output_dir": "out",
-                "clips": [
-                    {"start": "00:00", "end": "01:00", "label": "intro"},
-                    {"start": "02:00", "end": "03:00", "highlight": True},
-                ],
-            }
-        ])
+        spec_path = self._write_spec(
+            tmp_path,
+            [
+                {
+                    "input": "video.mp4",
+                    "output_dir": "out",
+                    "clips": [
+                        {"start": "00:00", "end": "01:00", "label": "intro"},
+                        {"start": "02:00", "end": "03:00", "highlight": True},
+                    ],
+                }
+            ],
+        )
         specs = _parse_batch_json(spec_path)
         assert len(specs) == 1
         assert len(specs[0].clips) == 2
@@ -371,20 +384,29 @@ class TestBatchJson:
         assert specs[0].clips[1].highlight is True
 
     def test_compress_parsed(self, tmp_path: Path):
-        spec_path = self._write_spec(tmp_path, [
-            {
-                "input": "v.mp4",
-                "clips": [{"start": "0", "end": "10", "compress": "high"}],
-            }
-        ])
+        spec_path = self._write_spec(
+            tmp_path,
+            [
+                {
+                    "input": "v.mp4",
+                    "clips": [{"start": "0", "end": "10", "compress": "high"}],
+                }
+            ],
+        )
         specs = _parse_batch_json(spec_path)
         assert specs[0].clips[0].compress is not None
         assert specs[0].clips[0].compress.crf == 18
 
     def test_invalid_compress_raises(self, tmp_path: Path):
-        spec_path = self._write_spec(tmp_path, [
-            {"input": "v.mp4", "clips": [{"start": "0", "end": "10", "compress": "ultra"}]}
-        ])
+        spec_path = self._write_spec(
+            tmp_path,
+            [
+                {
+                    "input": "v.mp4",
+                    "clips": [{"start": "0", "end": "10", "compress": "ultra"}],
+                }
+            ],
+        )
         with pytest.raises(ValueError, match="low|medium|high"):
             _parse_batch_json(spec_path)
 
@@ -394,9 +416,15 @@ class TestBatchJson:
             _parse_batch_json(spec_path)
 
     def test_aspect_ratio_in_spec(self, tmp_path: Path):
-        spec_path = self._write_spec(tmp_path, [
-            {"input": "v.mp4", "clips": [{"start": "0", "end": "5", "aspect": "9:16"}]}
-        ])
+        spec_path = self._write_spec(
+            tmp_path,
+            [
+                {
+                    "input": "v.mp4",
+                    "clips": [{"start": "0", "end": "5", "aspect": "9:16"}],
+                }
+            ],
+        )
         specs = _parse_batch_json(spec_path)
         assert specs[0].clips[0].aspect_ratio == AR_9_16
 
@@ -408,9 +436,9 @@ class TestCmdBatch:
         return p
 
     def test_ok_batch_returns_0(self, tmp_path: Path):
-        spec_path = self._write_spec(tmp_path, [
-            {"input": "v.mp4", "clips": [{"start": "0", "end": "10"}]}
-        ])
+        spec_path = self._write_spec(
+            tmp_path, [{"input": "v.mp4", "clips": [{"start": "0", "end": "10"}]}]
+        )
         args = argparse.Namespace(spec=str(spec_path))
 
         with patch("clipflow.cli.clipflow.batch", return_value={}):
@@ -433,6 +461,7 @@ class TestCmdBatch:
 # ---------------------------------------------------------------------------
 # main() entry point
 # ---------------------------------------------------------------------------
+
 
 class TestMainEntryPoint:
     def test_main_trim_dispatches(self, tmp_video: Path):
