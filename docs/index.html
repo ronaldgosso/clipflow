@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>clipflow — Python video trimming via ffmpeg</title>
+  <meta name="description" content="Trim, compress, and highlight video clips with a clean Python API. Zero dependencies. Powered by ffmpeg subprocess." />
+  <meta property="og:title" content="clipflow" />
+  <meta property="og:description" content="Python video trimming, compression & highlights via ffmpeg. Zero dependencies." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0b0b0b;
+      --bg2:      #111111;
+      --bg3:      #181818;
+      --surface:  #1e1e1e;
+      --border:   #2a2a2a;
+      --border2:  #333333;
+      --text:     #e8e8e8;
+      --muted:    #888888;
+      --faint:    #444444;
+      --amber:    #f5a623;
+      --amber2:   #c4811a;
+      --amber-bg: rgba(245,166,35,0.07);
+      --green:    #4caf7d;
+      --red:      #e05b5b;
+      --mono:     'IBM Plex Mono', monospace;
+      --sans:     'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Grain overlay ────────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 128px 128px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── Timeline grid lines ──────────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, var(--amber) 30%, var(--amber) 32%, transparent 100%);
+      z-index: 100;
+    }
+
+    * { position: relative; z-index: 1; }
+
+    /* ── Nav ──────────────────────────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 3rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11,11,11,0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { color: var(--amber); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-pip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--amber);
+      background: var(--amber-bg);
+      border: 1px solid rgba(245,166,35,0.25);
+      padding: 0.35rem 0.75rem;
+      border-radius: 2px;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .nav-pip:hover {
+      background: rgba(245,166,35,0.14);
+      border-color: rgba(245,166,35,0.5);
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────────── */
+    .hero {
+      padding: 6rem 3rem 5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1px;
+      background: var(--amber);
+    }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: clamp(2.8rem, 5vw, 4.5rem);
+      font-weight: 600;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+    }
+    h1 em {
+      font-style: normal;
+      color: var(--amber);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 440px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      padding: 0.75rem 1.5rem;
+      background: var(--amber);
+      color: #0b0b0b;
+      border: none;
+      border-radius: 2px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary:hover { background: #f0c060; transform: translateY(-1px); }
+
+    .btn-ghost {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, transform 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--faint); transform: translateY(-1px); }
+
+    /* ── Timecode widget ──────────────────────────────────────────────── */
+    .timecode-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1rem;
+      animation: fadeInRight 0.8s ease 0.2s both;
+    }
+
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .timecode-display {
+      font-family: var(--mono);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: var(--amber);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--amber);
+      padding: 1.5rem 2rem;
+      border-radius: 2px;
+      min-width: 340px;
+      text-align: center;
+      text-shadow: 0 0 40px rgba(245,166,35,0.2);
+      user-select: none;
+    }
+
+    .timecode-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--faint);
+      text-align: right;
+      margin-top: -0.5rem;
+    }
+
+    .clip-progress {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 0;
+      overflow: hidden;
+      min-width: 340px;
+    }
+    .clip-progress-bar {
+      height: 100%;
+      background: var(--amber);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .clip-list {
+      width: 100%;
+      min-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .clip-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: var(--bg2);
+      transition: background 0.2s;
+      cursor: default;
+    }
+    .clip-item:last-child { border-bottom: none; }
+    .clip-item.active {
+      background: var(--amber-bg);
+      color: var(--text);
+    }
+    .clip-item.done { color: var(--green); }
+    .clip-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--faint);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .clip-item.active .clip-dot { background: var(--amber); }
+    .clip-item.done .clip-dot { background: var(--green); }
+    .clip-item .clip-range {
+      margin-left: auto;
+      opacity: 0.6;
+    }
+    .clip-item.active .clip-range { opacity: 1; }
+
+    /* ── Install strip ────────────────────────────────────────────────── */
+    .install-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 1.25rem 3rem;
+    }
+    .install-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .install-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      flex-shrink: 0;
+    }
+    .install-cmd {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--amber);
+      flex: 1;
+    }
+    .install-cmd .dollar { color: var(--faint); margin-right: 0.5rem; }
+    .copy-btn {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.4rem 0.85rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--faint); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ── Sections ─────────────────────────────────────────────────────── */
+    section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5rem 3rem;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: var(--amber);
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Feature grid ─────────────────────────────────────────────────── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 3rem;
+    }
+
+    .feature-card {
+      background: var(--bg2);
+      padding: 2rem 1.75rem;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--bg3); }
+
+    .feature-icon {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      background: var(--amber-bg);
+      border: 1px solid rgba(245,166,35,0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 2px;
+      display: inline-block;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-title {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+
+    .feature-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── Code tabs ────────────────────────────────────────────────────── */
+    .code-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+
+    .code-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .code-tabs::-webkit-scrollbar { display: none; }
+
+    .code-tab {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      padding: 0.75rem 1.25rem;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+    .code-tab:hover { color: var(--text); }
+    .code-tab.active {
+      color: var(--amber);
+      border-bottom-color: var(--amber);
+    }
+
+    .code-panel {
+      display: none;
+      padding: 1.75rem 2rem;
+      overflow-x: auto;
+    }
+    .code-panel.active { display: block; }
+
+    pre {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.75;
+      color: var(--text);
+      tab-size: 4;
+      white-space: pre;
+    }
+
+    /* Syntax highlight colours */
+    .kw  { color: #c792ea; }   /* keywords */
+    .fn  { color: #82aaff; }   /* functions / methods */
+    .st  { color: #c3e88d; }   /* strings */
+    .cm  { color: var(--faint); font-style: italic; } /* comments */
+    .nb  { color: var(--amber); }  /* builtins / names */
+    .nm  { color: #f78c6c; }   /* numbers */
+    .pu  { color: var(--muted); }  /* punctuation */
+
+    /* ── CLI section ──────────────────────────────────────────────────── */
+    .cli-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .cli-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .cli-card-header {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cli-cmd-name {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .cli-cmd-desc {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--faint);
+      margin-left: auto;
+    }
+
+    .cli-body {
+      padding: 1.25rem 1.25rem;
+    }
+    .cli-body pre {
+      font-size: 0.76rem;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+    .cli-body pre .dollar { color: var(--faint); }
+    .cli-body pre .cmd   { color: var(--amber); }
+    .cli-body pre .arg   { color: var(--text); }
+    .cli-body pre .flag  { color: #82aaff; }
+    .cli-body pre .val   { color: #c3e88d; }
+
+    /* ── API reference table ──────────────────────────────────────────── */
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      margin-top: 1.75rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .api-table thead tr {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border2);
+    }
+    .api-table th {
+      text-align: left;
+      padding: 0.65rem 1rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 500;
+    }
+    .api-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .api-table tr:last-child td { border-bottom: none; }
+    .api-table tr { background: var(--bg2); }
+    .api-table tr:nth-child(even) { background: var(--bg3); }
+    .api-table .param { color: var(--amber); }
+    .api-table .type  { color: #82aaff; }
+    .api-table .desc  { color: var(--muted); font-family: var(--sans); font-size: 0.8rem; }
+    .api-table .default { color: var(--faint); }
+
+    /* ── Divider ──────────────────────────────────────────────────────── */
+    .section-divider {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 3rem;
+    }
+    .section-divider hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Preset pills ─────────────────────────────────────────────────── */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+    .preset-card {
+      background: var(--bg2);
+      padding: 1.5rem;
+    }
+    .preset-name {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--amber);
+      margin-bottom: 0.5rem;
+    }
+    .preset-attrs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .preset-attr {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .preset-attr span:last-child { color: var(--text); }
+
+    /* ── Footer ───────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 2.5rem 3rem;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .footer-logo {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .footer-logo span { color: var(--amber); }
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--faint);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--muted); }
+    .footer-byline {
+      font-size: 0.75rem;
+      color: var(--faint);
+      font-weight: 300;
+    }
+
+    /* ── Scroll fade-in ───────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 4rem 1.5rem 3rem; gap: 3rem; }
+      .timecode-wrap { align-items: flex-start; }
+      .timecode-display, .clip-progress, .clip-list { min-width: unset; width: 100%; }
+      .install-strip { padding: 1rem 1.5rem; }
+      section { padding: 3.5rem 1.5rem; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .cli-grid { grid-template-columns: 1fr; }
+      .preset-grid { grid-template-columns: 1fr; }
+      .section-divider { padding: 0 1.5rem; }
+      footer { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ──────────────────────────────────────────────────────────── -->
+  <nav>
+    <div class="nav-logo">clip<span>flow</span></div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#api">API</a></li>
+      <li><a href="#cli">CLI</a></li>
+      <li><a href="#reference">Reference</a></li>
+      <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
+    </ul>
+    <a class="nav-pip" href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">
+      PyPI v0.1.0
+    </a>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">Python · ffmpeg · zero dependencies</div>
+      <h1>clip<em>flow</em></h1>
+      <p class="hero-sub">
+        Trim, compress, and highlight video clips with a clean, typed Python API.
+        Powered by ffmpeg subprocess — no heavy libraries, no re-inventing the wheel.
+      </p>
+      <div class="hero-actions">
+        <a href="#api" class="btn-primary">↓ Quick start</a>
+        <a href="https://github.com/ronaldgosso/clipflow" class="btn-ghost" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+
+    <div class="timecode-wrap">
+      <div class="timecode-display" id="timecode">00:00:00:00</div>
+      <div class="timecode-label">● REC — processing clips</div>
+      <div class="clip-progress">
+        <div class="clip-progress-bar" id="progressBar"></div>
+      </div>
+      <div class="clip-list" id="clipList">
+        <div class="clip-item active" data-idx="0">
+          <div class="clip-dot"></div>
+          <span>intro</span>
+          <span class="clip-range">00:00 → 01:00</span>
+        </div>
+        <div class="clip-item" data-idx="1">
+          <div class="clip-dot"></div>
+          <span>key_moment ★</span>
+          <span class="clip-range">05:00 → 06:30</span>
+        </div>
+        <div class="clip-item" data-idx="2">
+          <div class="clip-dot"></div>
+          <span>vertical_short</span>
+          <span class="clip-range">10:00 → 10:30</span>
+        </div>
+        <div class="clip-item" data-idx="3">
+          <div class="clip-dot"></div>
+          <span>outro</span>
+          <span class="clip-range">58:30 → 60:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Install strip ─────────────────────────────────────────────────── -->
+  <div class="install-strip">
+    <div class="install-inner">
+      <span class="install-label">Install</span>
+      <span class="install-cmd"><span class="dollar">$</span>pip install clipflow</span>
+      <button class="copy-btn" id="copyBtn" onclick="copyInstall()">copy</button>
+      <span class="install-label" style="margin-left:1.5rem;">Requires</span>
+      <span class="install-cmd" style="color:var(--muted);">Python ≥ 3.9 &nbsp;·&nbsp; ffmpeg on PATH</span>
+    </div>
+  </div>
+
+  <!-- ── Features ──────────────────────────────────────────────────────── -->
+  <section id="features">
+    <div class="reveal">
+      <div class="section-label">Capabilities</div>
+      <h2>Everything you need.<br>Nothing you don't.</h2>
+    </div>
+    <div class="feature-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon">TRIM</div>
+        <div class="feature-title">Lossless stream-copy</div>
+        <div class="feature-desc">Default mode. <code style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-ss</code> before <code style="color:var(--amber);font-family:var(--mono);font-size:0.8em">-i</code> for a fast keyframe seek. No re-encoding, no quality loss, finished in seconds.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">COMPRESS</div>
+        <div class="feature-title">CRF re-encode</div>
+        <div class="feature-desc">Three named presets — <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">COMPRESS_LOW / MEDIUM / HIGH</code> — or supply any CRF value and codec directly.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">HIGHLIGHT ★</div>
+        <div class="feature-title">Highlight routing</div>
+        <div class="feature-desc">Mark any <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">ClipSpec</code> with <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">highlight=True</code>. Finished clips are copied to <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">output/highlights/</code> automatically — no second encode.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">ASPECT</div>
+        <div class="feature-title">Aspect ratio crop</div>
+        <div class="feature-desc">Crop and pad to 16:9, 9:16, 1:1, 4:3, or any custom ratio. Centred crop, even-dimension safe, applied as a single ffmpeg filter chain.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">INSPECT</div>
+        <div class="feature-title">Video metadata</div>
+        <div class="feature-desc">Duration, resolution, fps, codec, file size — returned as a typed <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">VideoInfo</code> dataclass via ffprobe. Works on any format ffmpeg supports.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">BATCH</div>
+        <div class="feature-title">Batch processing</div>
+        <div class="feature-desc">Process multiple source files in one call via <code style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">batch()</code>, or drive it from a JSON spec file with the CLI.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"><hr /></div>
+
+  <!-- ── API ───────────────────────────────────────────────────────────── -->
+  <section id="api">
+    <div class="reveal">
+      <div class="section-label">Python API</div>
+      <h2>Simple at the surface.<br>Precise underneath.</h2>
+    </div>
+
+    <div class="code-block reveal">
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="showTab('trim')">trim()</button>
+        <button class="code-tab" onclick="showTab('compress')">compression</button>
+        <button class="code-tab" onclick="showTab('highlight')">highlights</button>
+        <button class="code-tab" onclick="showTab('aspect')">aspect ratio</button>
+        <button class="code-tab" onclick="showTab('inspect')">inspect()</button>
+        <button class="code-tab" onclick="showTab('batch')">batch()</button>
+      </div>
+
+      <div class="code-panel active" id="tab-trim">
+<pre><span class="kw">import</span> clipflow
+<span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">parse_range</span>
+
+<span class="cm"># ── lossless stream-copy (default, fastest) ──────────────────────</span>
+results <span class="pu">=</span> clipflow.<span class="fn">trim</span><span class="pu">(</span>
+    <span class="st">"documentary.mp4"</span>,
+    <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"01:00"</span>, <span class="st">"02:30"</span><span class="pu">)),</span>
+    output_dir<span class="pu">=</span><span class="st">"clips"</span>,
+<span class="pu">)</span>
+
+<span class="cm"># ── multiple ranges in one call ───────────────────────────────────</span>
+clips <span class="pu">= [</span>
+    <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span> label<span class="pu">=</span><span class="st">"intro"</span><span class="pu">),</span>
+    <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"10:30"</span>, <span class="st">"12:00"</span><span class="pu">),</span> label<span class="pu">=</span><span class="st">"climax"</span><span class="pu">),</span>
+    <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"58:00"</span>, <span class="st">"60:00"</span><span class="pu">),</span> label<span class="pu">=</span><span class="st">"outro"</span><span class="pu">),</span>
+<span class="pu">]</span>
+results <span class="pu">=</span> clipflow.<span class="fn">trim</span><span class="pu">(</span><span class="st">"lecture.mp4"</span>, clips, output_dir<span class="pu">=</span><span class="st">"out"</span><span class="pu">)</span>
+
+<span class="cm"># ── per-clip progress callback ────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">on_progress</span><span class="pu">(</span>idx, total, result<span class="pu">):</span>
+    <span class="fn">print</span><span class="pu">(</span><span class="st">f"[{idx}/{total}] {result.spec.effective_label()}"</span><span class="pu">)</span>
+
+clipflow.<span class="fn">trim</span><span class="pu">(</span><span class="st">"video.mp4"</span>, clips, on_progress<span class="pu">=</span>on_progress<span class="pu">)</span></pre>
+      </div>
+
+      <div class="code-panel" id="tab-compress">
+<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">CompressOptions</span>, <span class="nb">COMPRESS_HIGH</span>, <span class="fn">parse_range</span>
+
+<span class="cm"># ── named preset (easiest) ────────────────────────────────────────</span>
+clip <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
+    <span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span>
+    compress<span class="pu">=</span><span class="nb">COMPRESS_HIGH</span>,  <span class="cm"># CRF 18, slow preset</span>
+<span class="pu">)</span>
+
+<span class="cm"># ── custom CRF + codec ────────────────────────────────────────────</span>
+custom <span class="pu">=</span> <span class="nb">CompressOptions</span><span class="pu">(</span>
+    crf<span class="pu">=</span><span class="nm">20</span>,
+    preset<span class="pu">=</span><span class="st">"slower"</span>,
+    codec<span class="pu">=</span><span class="st">"libx265"</span>,       <span class="cm"># H.265 — smaller files, same quality</span>
+    audio_bitrate<span class="pu">=</span><span class="st">"192k"</span>,
+<span class="pu">)</span>
+clip2 <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"05:00"</span>, <span class="st">"06:30"</span><span class="pu">),</span> compress<span class="pu">=</span>custom<span class="pu">)</span>
+
+<span class="cm"># CRF 0–51: lower = better quality, larger file</span>
+<span class="cm"># COMPRESS_LOW=28  COMPRESS_MEDIUM=23  COMPRESS_HIGH=18</span></pre>
+      </div>
+
+      <div class="code-panel" id="tab-highlight">
+<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">COMPRESS_MEDIUM</span>, <span class="fn">parse_range</span>
+<span class="kw">import</span> clipflow
+
+clips <span class="pu">= [</span>
+    <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span> label<span class="pu">=</span><span class="st">"intro"</span><span class="pu">),</span>
+    <span class="nb">ClipSpec</span><span class="pu">(</span>
+        <span class="fn">parse_range</span><span class="pu">(</span><span class="st">"05:00"</span>, <span class="st">"06:30"</span><span class="pu">),</span>
+        label<span class="pu">=</span><span class="st">"hero_moment"</span>,
+        highlight<span class="pu">=</span><span class="kw">True</span>,          <span class="cm"># ← routed to highlights/</span>
+        compress<span class="pu">=</span><span class="nb">COMPRESS_MEDIUM</span>,
+    <span class="pu">),</span>
+<span class="pu">]</span>
+
+results <span class="pu">=</span> clipflow.<span class="fn">trim</span><span class="pu">(</span><span class="st">"concert.mp4"</span>, clips, output_dir<span class="pu">=</span><span class="st">"out"</span><span class="pu">)</span>
+
+<span class="fn">print</span><span class="pu">(</span>results[<span class="nm">1</span>].output_path<span class="pu">)</span>
+<span class="cm"># out/hero_moment.mp4</span>
+
+<span class="fn">print</span><span class="pu">(</span>results[<span class="nm">1</span>].highlight_path<span class="pu">)</span>
+<span class="cm"># out/highlights/hero_moment.mp4  ← separate copy, no re-encode</span></pre>
+      </div>
+
+      <div class="code-panel" id="tab-aspect">
+<pre><span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">ClipSpec</span>, <span class="nb">AR_9_16</span>, <span class="nb">AR_16_9</span>, <span class="nb">AspectRatio</span>, <span class="fn">parse_range</span>
+
+<span class="cm"># ── named shortcuts ───────────────────────────────────────────────</span>
+vertical <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
+    <span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span>
+    aspect_ratio<span class="pu">=</span><span class="nb">AR_9_16</span>,    <span class="cm"># Reels / Shorts / TikTok</span>
+<span class="pu">)</span>
+landscape <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
+    <span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span>
+    aspect_ratio<span class="pu">=</span><span class="nb">AR_16_9</span>,    <span class="cm"># YouTube</span>
+<span class="pu">)</span>
+
+<span class="cm"># ── custom ratio ──────────────────────────────────────────────────</span>
+ultra <span class="pu">=</span> <span class="nb">ClipSpec</span><span class="pu">(</span>
+    <span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"01:00"</span><span class="pu">),</span>
+    aspect_ratio<span class="pu">=</span><span class="nb">AspectRatio</span><span class="pu">(</span><span class="nm">21</span>, <span class="nm">9</span><span class="pu">),</span>
+<span class="pu">)</span>
+
+<span class="cm"># AR_16_9  AR_9_16  AR_1_1  AR_4_3  — or AspectRatio(W, H)</span></pre>
+      </div>
+
+      <div class="code-panel" id="tab-inspect">
+<pre><span class="kw">import</span> clipflow
+
+info <span class="pu">=</span> clipflow.<span class="fn">inspect</span><span class="pu">(</span><span class="st">"documentary.mp4"</span><span class="pu">)</span>
+
+<span class="fn">print</span><span class="pu">(</span>info.resolution<span class="pu">)</span>    <span class="cm"># '1920×1080'</span>
+<span class="fn">print</span><span class="pu">(</span>info.duration_fmt<span class="pu">)</span>  <span class="cm"># '01:23:45'</span>
+<span class="fn">print</span><span class="pu">(</span>info.fps<span class="pu">)</span>           <span class="cm"># 29.97</span>
+<span class="fn">print</span><span class="pu">(</span>info.video_codec<span class="pu">)</span>   <span class="cm"># 'h264'</span>
+<span class="fn">print</span><span class="pu">(</span>info.audio_codec<span class="pu">)</span>   <span class="cm"># 'aac'</span>
+<span class="fn">print</span><span class="pu">(</span>info.size_mb<span class="pu">)</span>       <span class="cm"># 842.3</span>
+
+<span class="cm"># VideoInfo fields: path · duration_s · duration_fmt · width</span>
+<span class="cm"># height · resolution · fps · video_codec · audio_codec</span>
+<span class="cm"># size_bytes · size_mb</span></pre>
+      </div>
+
+      <div class="code-panel" id="tab-batch">
+<pre><span class="kw">from</span> pathlib <span class="kw">import</span> <span class="nb">Path</span>
+<span class="kw">from</span> clipflow <span class="kw">import</span> <span class="nb">BatchSpec</span>, <span class="nb">ClipSpec</span>, <span class="fn">parse_range</span>
+<span class="kw">import</span> clipflow
+
+specs <span class="pu">= [</span>
+    <span class="nb">BatchSpec</span><span class="pu">(</span>
+        input_path<span class="pu">=</span><span class="nb">Path</span><span class="pu">(</span><span class="st">"ep01.mp4"</span><span class="pu">),</span>
+        output_dir<span class="pu">=</span><span class="nb">Path</span><span class="pu">(</span><span class="st">"ep01_clips"</span><span class="pu">),</span>
+        clips<span class="pu">=[</span>
+            <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:30"</span>, <span class="st">"01:30"</span><span class="pu">),</span> label<span class="pu">=</span><span class="st">"cold_open"</span><span class="pu">),</span>
+            <span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"20:00"</span>, <span class="st">"21:00"</span><span class="pu">),</span> highlight<span class="pu">=</span><span class="kw">True</span><span class="pu">),</span>
+        <span class="pu">],</span>
+    <span class="pu">),</span>
+    <span class="nb">BatchSpec</span><span class="pu">(</span>
+        input_path<span class="pu">=</span><span class="nb">Path</span><span class="pu">(</span><span class="st">"ep02.mp4"</span><span class="pu">)</span>,
+        output_dir<span class="pu">=</span><span class="nb">Path</span><span class="pu">(</span><span class="st">"ep02_clips"</span><span class="pu">),</span>
+        clips<span class="pu">=[</span><span class="nb">ClipSpec</span><span class="pu">(</span><span class="fn">parse_range</span><span class="pu">(</span><span class="st">"00:00"</span>, <span class="st">"02:00"</span><span class="pu">))],</span>
+    <span class="pu">),</span>
+<span class="pu">]</span>
+
+all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><span class="pu">(</span>specs<span class="pu">)</span>
+
+<span class="kw">for</span> path, results <span class="kw">in</span> all_results.<span class="fn">items</span><span class="pu">():</span>
+    ok <span class="pu">=</span> <span class="fn">sum</span><span class="pu">(</span>r.ok <span class="kw">for</span> r <span class="kw">in</span> results<span class="pu">)</span>
+    <span class="fn">print</span><span class="pu">(</span><span class="st">f"{path.name}: {ok}/{len(results)} ok"</span><span class="pu">)</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"><hr /></div>
+
+  <!-- ── CLI ───────────────────────────────────────────────────────────── -->
+  <section id="cli">
+    <div class="reveal">
+      <div class="section-label">CLI</div>
+      <h2>Three commands.<br>Complete control.</h2>
+    </div>
+    <div class="cli-grid reveal">
+      <div class="cli-card">
+        <div class="cli-card-header">
+          <span class="cli-cmd-name">clipflow trim</span>
+          <span class="cli-cmd-desc">extract segments</span>
+        </div>
+        <div class="cli-body">
+<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">lecture.mp4</span> <span class="val">01:00-02:30</span>
+
+<span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">lecture.mp4</span> <span class="val">00:00-01:00</span> <span class="val">10:30-12:00</span> \
+    <span class="flag">--output</span> <span class="val">clips/</span>
+
+<span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">concert.mp4</span> <span class="val">05:00-06:30</span> \
+    <span class="flag">--compress</span> <span class="val">high</span> \
+    <span class="flag">--aspect</span> <span class="val">9:16</span> \
+    <span class="flag">--highlight</span>
+
+<span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">trim</span> <span class="val">raw.mp4</span> <span class="val">00:00-30:00</span> \
+    <span class="flag">--crf</span> <span class="val">20</span> <span class="flag">--codec</span> <span class="val">libx265</span></pre>
+        </div>
+      </div>
+      <div class="cli-card">
+        <div class="cli-card-header">
+          <span class="cli-cmd-name">clipflow inspect</span>
+          <span class="cli-cmd-desc">video metadata</span>
+        </div>
+        <div class="cli-body">
+<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">inspect</span> <span class="val">documentary.mp4</span>
+
+  <span style="color:var(--text)">documentary.mp4</span>
+  ────────────────────────────────────
+  Duration   <span style="color:var(--amber)">01:23:45</span>
+  Resolution <span style="color:var(--amber)">1920×1080</span>
+  FPS        <span style="color:var(--amber)">29.970</span>
+  Video      <span style="color:var(--amber)">h264</span>
+  Audio      <span style="color:var(--amber)">aac</span>
+  Size       <span style="color:var(--amber)">842.3 MB</span>
+
+<span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">inspect</span> <span class="val">video.mp4</span> <span class="flag">--json</span> <span class="pu">|</span> jq .fps</pre>
+        </div>
+      </div>
+      <div class="cli-card">
+        <div class="cli-card-header">
+          <span class="cli-cmd-name">clipflow batch</span>
+          <span class="cli-cmd-desc">JSON-driven batch</span>
+        </div>
+        <div class="cli-body">
+<pre><span class="dollar">$</span> <span class="cmd">clipflow</span> <span class="arg">batch</span> <span class="val">spec.json</span>
+
+<span class="cm"># spec.json</span>
+<span class="pu">[{</span>
+  <span class="st">"input"</span><span class="pu">:</span> <span class="st">"lecture.mp4"</span>,
+  <span class="st">"output_dir"</span><span class="pu">:</span> <span class="st">"clips"</span>,
+  <span class="st">"clips"</span><span class="pu">: [{</span>
+    <span class="st">"start"</span><span class="pu">:</span> <span class="st">"00:30"</span>, <span class="st">"end"</span><span class="pu">:</span> <span class="st">"02:15"</span>,
+    <span class="st">"label"</span><span class="pu">:</span> <span class="st">"intro"</span>, <span class="st">"compress"</span><span class="pu">:</span> <span class="st">"medium"</span>,
+    <span class="st">"highlight"</span><span class="pu">:</span> <span class="kw">true</span>
+  <span class="pu">}]</span>
+<span class="pu">}]</span></pre>
+        </div>
+      </div>
+      <div class="cli-card">
+        <div class="cli-card-header">
+          <span class="cli-cmd-name">time formats</span>
+          <span class="cli-cmd-desc">accepted everywhere</span>
+        </div>
+        <div class="cli-body">
+<pre><span class="cm"># All of these are equivalent</span>
+<span class="val">01:30</span>       <span class="cm"># MM:SS → 90 seconds</span>
+<span class="val">00:01:30</span>    <span class="cm"># HH:MM:SS → 90 seconds</span>
+<span class="val">90</span>          <span class="cm"># plain integer seconds</span>
+<span class="val">90.5</span>        <span class="cm"># fractional seconds</span>
+
+<span class="cm"># In Python</span>
+<span class="fn">parse_range</span><span class="pu">(</span><span class="st">"01:30"</span>, <span class="st">"02:00"</span><span class="pu">)</span>
+<span class="fn">parse_range</span><span class="pu">(</span><span class="nm">90</span>, <span class="nm">120</span><span class="pu">)</span>
+<span class="fn">parse_range</span><span class="pu">(</span><span class="st">"1:30"</span>, <span class="nm">120.0</span><span class="pu">)</span>  <span class="cm"># mixed ok</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"><hr /></div>
+
+  <!-- ── Reference ─────────────────────────────────────────────────────── -->
+  <section id="reference">
+    <div class="reveal">
+      <div class="section-label">Reference</div>
+      <h2>Compression presets.</h2>
+    </div>
+    <div class="preset-grid reveal">
+      <div class="preset-card">
+        <div class="preset-name">COMPRESS_LOW</div>
+        <div class="preset-attrs">
+          <div class="preset-attr"><span>CRF</span><span>28</span></div>
+          <div class="preset-attr"><span>Preset</span><span>fast</span></div>
+          <div class="preset-attr"><span>Codec</span><span>libx264</span></div>
+          <div class="preset-attr"><span>Use case</span><span>smallest file</span></div>
+        </div>
+      </div>
+      <div class="preset-card" style="border-top: 2px solid var(--amber);">
+        <div class="preset-name">COMPRESS_MEDIUM</div>
+        <div class="preset-attrs">
+          <div class="preset-attr"><span>CRF</span><span>23</span></div>
+          <div class="preset-attr"><span>Preset</span><span>medium</span></div>
+          <div class="preset-attr"><span>Codec</span><span>libx264</span></div>
+          <div class="preset-attr"><span>Use case</span><span>balanced (default)</span></div>
+        </div>
+      </div>
+      <div class="preset-card">
+        <div class="preset-name">COMPRESS_HIGH</div>
+        <div class="preset-attrs">
+          <div class="preset-attr"><span>CRF</span><span>18</span></div>
+          <div class="preset-attr"><span>Preset</span><span>slow</span></div>
+          <div class="preset-attr"><span>Codec</span><span>libx264</span></div>
+          <div class="preset-attr"><span>Use case</span><span>best quality</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="margin-top:3.5rem;">
+      <h3>clipflow.trim() parameters</h3>
+      <table class="api-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="param">input_path</td>
+            <td class="type">str | Path</td>
+            <td class="default">required</td>
+            <td class="desc">Source video file path</td>
+          </tr>
+          <tr>
+            <td class="param">clips</td>
+            <td class="type">ClipSpec | list[ClipSpec]</td>
+            <td class="default">required</td>
+            <td class="desc">One or more segments to extract</td>
+          </tr>
+          <tr>
+            <td class="param">output_dir</td>
+            <td class="type">str | Path</td>
+            <td class="default">"output"</td>
+            <td class="desc">Destination directory, created automatically</td>
+          </tr>
+          <tr>
+            <td class="param">on_progress</td>
+            <td class="type">callable | None</td>
+            <td class="default">None</td>
+            <td class="desc">Called after each clip: (idx, total, ClipResult) → None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reveal" style="margin-top:2.5rem;">
+      <h3>ClipSpec fields</h3>
+      <table class="api-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="param">time_range</td>
+            <td class="type">TimeRange</td>
+            <td class="default">required</td>
+            <td class="desc">Segment start and end in seconds</td>
+          </tr>
+          <tr>
+            <td class="param">highlight</td>
+            <td class="type">bool</td>
+            <td class="default">False</td>
+            <td class="desc">Also copy finished clip to output/highlights/</td>
+          </tr>
+          <tr>
+            <td class="param">compress</td>
+            <td class="type">CompressOptions | None</td>
+            <td class="default">None</td>
+            <td class="desc">Re-encode settings; None = lossless stream-copy</td>
+          </tr>
+          <tr>
+            <td class="param">aspect_ratio</td>
+            <td class="type">AspectRatio | None</td>
+            <td class="default">None</td>
+            <td class="desc">Crop and pad to target W:H ratio</td>
+          </tr>
+          <tr>
+            <td class="param">label</td>
+            <td class="type">str | None</td>
+            <td class="default">None</td>
+            <td class="desc">Output filename stem; auto-generated if omitted</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">clip<span>flow</span> <span style="color:var(--faint);margin-left:0.5rem;font-size:0.75rem;">v0.1.0</span></div>
+      <ul class="footer-links">
+        <li><a href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">PyPI ↗</a></li>
+        <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
+        <li><a href="https://github.com/ronaldgosso/clipflow/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog ↗</a></li>
+        <li><a href="https://github.com/ronaldgosso/clipflow/issues" target="_blank" rel="noopener">Issues ↗</a></li>
+      </ul>
+      <div class="footer-byline">MIT © <a href="https://github.com/ronaldgosso" style="color:var(--faint);text-decoration:none;" target="_blank" rel="noopener">Ronald Isack Gosso</a></div>
+    </div>
+  </footer>
+
+  <script>
+    /* ── Tabs ─────────────────────────────────────────────────────── */
+    function showTab(id) {
+      document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + id).classList.add('active');
+    }
+
+    /* ── Copy install command ─────────────────────────────────────── */
+    function copyInstall() {
+      navigator.clipboard.writeText('pip install clipflow').then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    /* ── Timecode animation ───────────────────────────────────────── */
+    const clips = [
+      { label: 'intro',       start: 0,    end: 60,   idx: 0 },
+      { label: 'key_moment ★', start: 300, end: 390,  idx: 1 },
+      { label: 'vertical_short', start: 600, end: 630, idx: 2 },
+      { label: 'outro',       start: 3510, end: 3600, idx: 3 },
+    ];
+    let clipIdx = 0, simTime = 0, rafId;
+    const SPEED = 8; // playback speed multiplier
+
+    function toTC(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      const f = Math.floor((secs % 1) * 30);
+      return `${p(h)}:${p(m)}:${p(s)}:${p(f)}`;
+    }
+    function p(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      const clip = clips[clipIdx];
+      simTime += SPEED / 60;
+      if (simTime > clip.end) {
+        simTime = clip.end;
+        // Mark done, advance
+        document.querySelector(`[data-idx="${clipIdx}"]`).classList.remove('active');
+        document.querySelector(`[data-idx="${clipIdx}"]`).classList.add('done');
+        clipIdx = (clipIdx + 1) % clips.length;
+        if (clipIdx === 0) {
+          // reset all
+          document.querySelectorAll('.clip-item').forEach(el => el.classList.remove('done','active'));
+        }
+        simTime = clips[clipIdx].start;
+        document.querySelector(`[data-idx="${clipIdx}"]`).classList.add('active');
+      }
+      document.getElementById('timecode').textContent = toTC(simTime);
+      const pct = ((simTime - clip.start) / (clip.end - clip.start)) * 100;
+      document.getElementById('progressBar').style.width = Math.min(100, Math.max(0, pct)) + '%';
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+
+    /* ── Scroll reveal ────────────────────────────────────────────── */
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
