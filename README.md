@@ -72,7 +72,7 @@ import clipflow
 # Optional: Pre-download FFmpeg (happens automatically on first use anyway)
 clipflow.setup_ffmpeg()
 
-# Check where FFmpeg is located
+# Check where FFmpeg is located 
 print(clipflow.get_ffmpeg_path())
 print(clipflow.get_ffprobe_path())
 ```
