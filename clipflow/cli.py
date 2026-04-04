@@ -379,7 +379,8 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 # `clipflow batch`
 # ---------------------------------------------------------------------------
 
-_BATCH_SCHEMA_EXAMPLE = textwrap.dedent("""
+_BATCH_SCHEMA_EXAMPLE = textwrap.dedent(
+    """
   JSON spec file format
   ─────────────────────
   [
@@ -404,7 +405,8 @@ _BATCH_SCHEMA_EXAMPLE = textwrap.dedent("""
       ]
     }
   ]
-""").strip()
+"""
+).strip()
 
 
 def _parse_batch_json(path: Path) -> list[BatchSpec]:
@@ -507,7 +509,8 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="clipflow",
         description="Trim, compress, and highlight video clips via ffmpeg.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""
+        epilog=textwrap.dedent(
+            """
             examples:
               # stream-copy trim (lossless, fast)
               clipflow trim lecture.mp4 01:00-02:30
@@ -527,7 +530,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
               # batch from JSON spec
               clipflow batch spec.json
-        """),
+        """
+        ),
     )
     parser.add_argument(
         "--version", action="version", version=f"clipflow {clipflow.__version__}"
@@ -541,7 +545,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "trim",
         help="Trim one or more time ranges from a video",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=textwrap.dedent("""
+        description=textwrap.dedent(
+            """
             Trim segments from a video file.
 
             Each RANGE is  START-END  where START / END accept:
@@ -551,7 +556,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
             Without --compress the output is a lossless stream-copy
             (very fast, no quality loss).
-        """),
+        """
+        ),
     )
     p_trim.add_argument("input", metavar="INPUT", help="Source video file")
     p_trim.add_argument(
