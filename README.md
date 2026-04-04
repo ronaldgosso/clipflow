@@ -26,6 +26,7 @@ Zero runtime dependencies.
 [![Typed](https://img.shields.io/badge/typed-py.typed-82aaff?labelColor=111)](clipflow/py.typed)
 [![Homepage](https://img.shields.io/badge/homepage-ronaldgosso.github.io%2Fclipflow-f5a623?labelColor=111)](https://ronaldgosso.github.io/clipflow)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1LWJ2GmCZLqmKXmJ25lBR5uFX5tmXK7OJ?usp=sharing)
+[![Downloads](https://img.shields.io/pypi/dm/clipflow.svg)](https://pypi.org/project/clipflow/)
 
 <br />
 
