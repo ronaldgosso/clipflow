@@ -24,6 +24,8 @@ True
 
 from clipflow._ffmpeg_manager import (
     ensure_ffmpeg as setup_ffmpeg,
+)
+from clipflow._ffmpeg_manager import (
     get_ffmpeg_path,
     get_ffprobe_path,
 )
