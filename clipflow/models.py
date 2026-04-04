@@ -14,6 +14,7 @@ from pathlib import Path
 # Time range
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class TimeRange:
     """
@@ -25,7 +26,7 @@ class TimeRange:
     """
 
     start: float  # seconds
-    end: float    # seconds
+    end: float  # seconds
 
     def __post_init__(self) -> None:
         if self.start < 0:
@@ -52,6 +53,7 @@ def _fmt(seconds: float) -> str:
 # ---------------------------------------------------------------------------
 # Compression
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class CompressOptions:
@@ -84,8 +86,15 @@ class CompressOptions:
         if not (0 <= self.crf <= 51):
             raise ValueError(f"crf must be 0–51, got {self.crf}")
         valid_presets = {
-            "ultrafast", "superfast", "veryfast", "faster",
-            "fast", "medium", "slow", "slower", "veryslow",
+            "ultrafast",
+            "superfast",
+            "veryfast",
+            "faster",
+            "fast",
+            "medium",
+            "slow",
+            "slower",
+            "veryslow",
         }
         if self.preset not in valid_presets:
             raise ValueError(
@@ -102,6 +111,7 @@ COMPRESS_HIGH = CompressOptions(crf=18, preset="slow")
 # ---------------------------------------------------------------------------
 # Aspect ratio
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class AspectRatio:
@@ -136,6 +146,7 @@ AR_4_3 = AspectRatio(4, 3)
 # ---------------------------------------------------------------------------
 # Clip spec — the main unit of work
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ClipSpec:
@@ -178,6 +189,7 @@ class ClipSpec:
 # Result — returned after every operation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ClipResult:
     """
@@ -217,6 +229,7 @@ class ClipResult:
 # ---------------------------------------------------------------------------
 # VideoInfo — returned by inspect()
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class VideoInfo:
@@ -260,6 +273,7 @@ class VideoInfo:
 # ---------------------------------------------------------------------------
 # Batch spec
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BatchSpec:

@@ -50,6 +50,9 @@ Repository = "https://github.com/ronaldgosso/clipflow"
 where = ["."]
 include = ["clipflow*"]
 
+[tool.setuptools.package-data]
+clipflow = ["py.typed"]
+
 # ---------------------------------------------------------------------------
 # Ruff
 # ---------------------------------------------------------------------------
@@ -86,3 +89,23 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["clipflow"]
+omit = ["tests/*", "clipflow/cli.py"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]

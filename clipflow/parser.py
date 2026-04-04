@@ -19,9 +19,7 @@ import re
 from clipflow.models import TimeRange
 
 # Matches  HH:MM:SS, MM:SS, or plain seconds (with optional decimal)
-_COLON_RE = re.compile(
-    r"^(?:(?P<h>\d+):)?(?P<m>\d{1,2}):(?P<s>\d{1,2}(?:\.\d+)?)$"
-)
+_COLON_RE = re.compile(r"^(?:(?P<h>\d+):)?(?P<m>\d{1,2}):(?P<s>\d{1,2}(?:\.\d+)?)$")
 _PLAIN_RE = re.compile(r"^\d+(\.\d+)?$")
 
 

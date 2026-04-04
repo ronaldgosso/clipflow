@@ -44,15 +44,15 @@ from clipflow.parser import parse_range
 _USE_COLOUR = sys.stdout.isatty()
 
 _C = {
-    "reset":  "\033[0m",
-    "bold":   "\033[1m",
-    "dim":    "\033[2m",
-    "green":  "\033[32m",
+    "reset": "\033[0m",
+    "bold": "\033[1m",
+    "dim": "\033[2m",
+    "green": "\033[32m",
     "yellow": "\033[33m",
-    "cyan":   "\033[36m",
-    "red":    "\033[31m",
-    "white":  "\033[97m",
-    "grey":   "\033[90m",
+    "cyan": "\033[36m",
+    "red": "\033[31m",
+    "white": "\033[97m",
+    "grey": "\033[90m",
 }
 
 
@@ -62,18 +62,38 @@ def _c(code: str, text: str) -> str:
     return f"{_C[code]}{text}{_C['reset']}"
 
 
-def _bold(t: str) -> str:   return _c("bold",   t)
-def _green(t: str) -> str:  return _c("green",  t)
-def _yellow(t: str) -> str: return _c("yellow", t)
-def _cyan(t: str) -> str:   return _c("cyan",   t)
-def _red(t: str) -> str:    return _c("red",    t)
-def _grey(t: str) -> str:   return _c("grey",   t)
-def _dim(t: str) -> str:    return _c("dim",    t)
+def _bold(t: str) -> str:
+    return _c("bold", t)
+
+
+def _green(t: str) -> str:
+    return _c("green", t)
+
+
+def _yellow(t: str) -> str:
+    return _c("yellow", t)
+
+
+def _cyan(t: str) -> str:
+    return _c("cyan", t)
+
+
+def _red(t: str) -> str:
+    return _c("red", t)
+
+
+def _grey(t: str) -> str:
+    return _c("grey", t)
+
+
+def _dim(t: str) -> str:
+    return _c("dim", t)
 
 
 # ---------------------------------------------------------------------------
 # Print helpers
 # ---------------------------------------------------------------------------
+
 
 def _banner() -> None:
     """Print the clipflow wordmark."""
@@ -107,7 +127,9 @@ def _print_result(idx: int, total: int, result: ClipResult) -> None:
         print(f"{prefix} {_green('✓')} {_bold(label)}  {_grey(elapsed)}")
         print(f"       {_dim('→')} {path_str}")
         if result.highlight_path:
-            print(f"       {_dim('★')} {_yellow('highlight')} → {result.highlight_path}")
+            print(
+                f"       {_dim('★')} {_yellow('highlight')} → {result.highlight_path}"
+            )
     else:
         print(f"{prefix} {_red('✗')} {_bold(label)}  {_grey(elapsed)}")
         print(f"       {_red('error:')} {result.error}", file=sys.stderr)
@@ -116,6 +138,7 @@ def _print_result(idx: int, total: int, result: ClipResult) -> None:
 # ---------------------------------------------------------------------------
 # Shared arg parsers
 # ---------------------------------------------------------------------------
+
 
 def _add_compress_args(p: argparse.ArgumentParser) -> None:
     g = p.add_argument_group("compression (optional — omit for lossless stream-copy)")
@@ -160,8 +183,8 @@ def _add_aspect_args(p: argparse.ArgumentParser) -> None:
 _NAMED_RATIOS = {
     "16:9": AR_16_9,
     "9:16": AR_9_16,
-    "1:1":  AR_1_1,
-    "4:3":  AR_4_3,
+    "1:1": AR_1_1,
+    "4:3": AR_4_3,
 }
 
 
@@ -191,9 +214,9 @@ def _build_compress(
 
     # Named preset sets base CRF + speed preset
     preset_map = {
-        "low":    clipflow.COMPRESS_LOW,
+        "low": clipflow.COMPRESS_LOW,
         "medium": clipflow.COMPRESS_MEDIUM,
-        "high":   clipflow.COMPRESS_HIGH,
+        "high": clipflow.COMPRESS_HIGH,
     }
 
     if compress is not None:
@@ -218,6 +241,7 @@ def _build_compress(
 # `clipflow trim`
 # ---------------------------------------------------------------------------
 
+
 def _cmd_trim(args: argparse.Namespace) -> int:
     """
     clipflow trim input.mp4 00:00-01:30 [05:00-06:00 ...] [options]
@@ -236,9 +260,7 @@ def _cmd_trim(args: argparse.Namespace) -> int:
 
     # Parse ranges
     clips: list[ClipSpec] = []
-    compress = _build_compress(
-        args.compress, args.crf, args.codec, args.audio_bitrate
-    )
+    compress = _build_compress(args.compress, args.crf, args.codec, args.audio_bitrate)
     aspect = _parse_aspect(getattr(args, "aspect", None))
 
     for i, rng in enumerate(args.ranges):
@@ -305,6 +327,7 @@ def _cmd_trim(args: argparse.Namespace) -> int:
 # `clipflow inspect`
 # ---------------------------------------------------------------------------
 
+
 def _cmd_inspect(args: argparse.Namespace) -> int:
     """
     clipflow inspect input.mp4 [--json]
@@ -341,13 +364,13 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
     print(f"  {_bold(input_path.name)}")
     _rule()
-    _info("Duration ",   _bold(info.duration_fmt))
-    _info("Resolution",  _bold(info.resolution))
-    _info("FPS      ",   _bold(f"{info.fps:.3f}"))
-    _info("Video    ",   _bold(info.video_codec))
-    _info("Audio    ",   _bold(info.audio_codec or "none"))
-    _info("Size     ",   _bold(f"{info.size_mb} MB"))
-    _info("Path     ",   _dim(str(info.path)))
+    _info("Duration ", _bold(info.duration_fmt))
+    _info("Resolution", _bold(info.resolution))
+    _info("FPS      ", _bold(f"{info.fps:.3f}"))
+    _info("Video    ", _bold(info.video_codec))
+    _info("Audio    ", _bold(info.audio_codec or "none"))
+    _info("Size     ", _bold(f"{info.size_mb} MB"))
+    _info("Path     ", _dim(str(info.path)))
     print()
     return 0
 
@@ -401,9 +424,9 @@ def _parse_batch_json(path: Path) -> list[BatchSpec]:
             compress_obj: CompressOptions | None = None
             if compress_name:
                 preset_map = {
-                    "low":    clipflow.COMPRESS_LOW,
+                    "low": clipflow.COMPRESS_LOW,
                     "medium": clipflow.COMPRESS_MEDIUM,
-                    "high":   clipflow.COMPRESS_HIGH,
+                    "high": clipflow.COMPRESS_HIGH,
                 }
                 if compress_name not in preset_map:
                     raise ValueError(
@@ -478,6 +501,7 @@ def _cmd_batch(args: argparse.Namespace) -> int:
 # Root parser
 # ---------------------------------------------------------------------------
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="clipflow",
@@ -537,7 +561,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Time range(s) to extract, e.g. 01:00-02:30",
     )
     p_trim.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         default="output",
         metavar="DIR",
         help="Output directory  [default: output]",
@@ -586,6 +611,7 @@ def _build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = _build_parser()

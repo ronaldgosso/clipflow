@@ -47,6 +47,7 @@ ProgressCallback = Callable[[int, int, ClipResult], None]
 # inspect
 # ---------------------------------------------------------------------------
 
+
 def inspect(input_path: str | Path) -> VideoInfo:
     """
     Return metadata about *input_path* without modifying it.
@@ -116,6 +117,7 @@ def inspect(input_path: str | Path) -> VideoInfo:
 # ---------------------------------------------------------------------------
 # trim — single-file, one or many clips
 # ---------------------------------------------------------------------------
+
 
 def trim(
     input_path: str | Path,
@@ -237,9 +239,7 @@ def trim(
                 duration_s=elapsed,
                 ok=True,
             )
-            log.info(
-                "[%d/%d] ✓ %s (%.2fs)", idx + 1, len(clips), label, elapsed
-            )
+            log.info("[%d/%d] ✓ %s (%.2fs)", idx + 1, len(clips), label, elapsed)
 
         except Exception as exc:
             elapsed = time.perf_counter() - t0
@@ -263,6 +263,7 @@ def trim(
 # ---------------------------------------------------------------------------
 # batch — multiple source files
 # ---------------------------------------------------------------------------
+
 
 def batch(
     specs: list[BatchSpec],

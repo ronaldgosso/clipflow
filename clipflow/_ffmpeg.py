@@ -30,6 +30,7 @@ log = logging.getLogger("clipflow")
 # ffmpeg / ffprobe availability check
 # ---------------------------------------------------------------------------
 
+
 def require_ffmpeg() -> None:
     """Raise :class:`RuntimeError` if ffmpeg is not on PATH."""
     if shutil.which("ffmpeg") is None:
@@ -52,6 +53,7 @@ def require_ffprobe() -> None:
 # ---------------------------------------------------------------------------
 # Core trim command builder
 # ---------------------------------------------------------------------------
+
 
 def _build_trim_command(
     input_path: Path,
@@ -106,9 +108,12 @@ def _build_trim_command(
     # ---------- codec / quality ----------
     if compress:
         cmd += [
-            "-c:v", codec or "libx264",
-            "-crf", str(crf),
-            "-preset", preset or "medium",
+            "-c:v",
+            codec or "libx264",
+            "-crf",
+            str(crf),
+            "-preset",
+            preset or "medium",
         ]
         if audio_bitrate:
             cmd += ["-b:a", audio_bitrate]
@@ -128,6 +133,7 @@ def _build_trim_command(
 # ---------------------------------------------------------------------------
 # Aspect ratio filter builder
 # ---------------------------------------------------------------------------
+
 
 def build_aspect_ratio_filter(target_w: int, target_h: int) -> str:
     """
@@ -159,6 +165,7 @@ def build_aspect_ratio_filter(target_w: int, target_h: int) -> str:
 # ffprobe metadata extractor
 # ---------------------------------------------------------------------------
 
+
 def probe(input_path: Path) -> dict:  # type: ignore[type-arg]
     """
     Run ffprobe and return the raw JSON dict.
@@ -171,8 +178,10 @@ def probe(input_path: Path) -> dict:  # type: ignore[type-arg]
     require_ffprobe()
     cmd = [
         "ffprobe",
-        "-v", "quiet",
-        "-print_format", "json",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
         "-show_format",
         "-show_streams",
         str(input_path),
@@ -190,6 +199,7 @@ def probe(input_path: Path) -> dict:  # type: ignore[type-arg]
 # ---------------------------------------------------------------------------
 # Primary trim executor
 # ---------------------------------------------------------------------------
+
 
 def run_trim(
     input_path: Path,
@@ -241,6 +251,7 @@ def run_trim(
 # ---------------------------------------------------------------------------
 # File copy (for highlight duplication)
 # ---------------------------------------------------------------------------
+
 
 def copy_file(src: Path, dst: Path) -> None:
     """Copy *src* to *dst*, creating parent directories as needed."""
