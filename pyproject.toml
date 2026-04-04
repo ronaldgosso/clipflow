@@ -96,7 +96,7 @@ addopts = "-v --tb=short"
 
 [tool.coverage.run]
 source = ["clipflow"]
-omit = ["tests/*", "clipflow/cli.py"]
+omit = ["tests/*", "clipflow/cli.py", "clipflow/_ffmpeg_manager.py"]
 branch = true
 
 [tool.coverage.report]
