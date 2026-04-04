@@ -19,6 +19,8 @@ Zero runtime dependencies.
 <br />
 
 [![Tests](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/clipflow?color=f5a623&labelColor=111)](https://pypi.org/project/clipflow/)
+[![Python versions](https://img.shields.io/pypi/pyversions/clipflow?labelColor=111)](https://pypi.org/project/clipflow/)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-4caf7d?labelColor=111)](https://github.com/ronaldgosso/clipflow/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-888?labelColor=111)](LICENSE)
 [![Typed](https://img.shields.io/badge/typed-py.typed-82aaff?labelColor=111)](clipflow/py.typed)
