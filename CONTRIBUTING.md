@@ -45,7 +45,7 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 ```bash
 # 1. Fork the repository on GitHub
 # 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/clipflow.git
+git clone https://github.com/ronaldgosso/clipflow.git
 cd clipflow
 
 # 3. Create a virtual environment

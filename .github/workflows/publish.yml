@@ -93,5 +93,4 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        # No username/password — PyPI OIDC trusted publisher handles auth.
-        # Set up at: https://pypi.org/manage/project/clipflow/settings/publishing/
+
