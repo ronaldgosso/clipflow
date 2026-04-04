@@ -27,17 +27,20 @@ jobs:
       - name: Install dev dependencies
         run: pip install -e ".[dev]"
 
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Ruff
         run: python -m ruff check clipflow/ tests/
 
       - name: Black
-        run: python -m black --check clipflow/ tests/
+        run: black --check clipflow/ tests/
 
       - name: Mypy
-        run: python -m mypy clipflow/ --ignore-missing-imports
+        run: mypy clipflow/
 
       - name: Pytest
-        run: python -m pytest tests/ --tb=short
+        run: pytest tests/ --tb=short
 
   # ── 2. Build the distribution ────────────────────────────────────────────
   build:
