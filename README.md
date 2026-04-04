@@ -13,7 +13,7 @@
 
 **Trim · Compress · Highlight**
 
-Typed Python API and CLI for video clipping — powered by ffmpeg subprocess.
+Typed Python API and CLI for video clipping — auto-managed ffmpeg, zero setup.
 Zero runtime dependencies.
 
 <br />
@@ -50,14 +50,57 @@ Most Python video libraries convert frames to NumPy arrays — slow, memory-heav
 pip install clipflow
 ```
 
-**Requires:** Python ≥ 3.9 and [ffmpeg](https://ffmpeg.org/download.html) on your `PATH`.
+**Requires:** Python ≥ 3.9
+
+**FFmpeg:** Automatically downloaded and managed on first use — no manual installation required! 🎉
+
+### How FFmpeg Management Works
+
+On first use, `clipflow` automatically:
+1. Detects your platform (Windows, macOS, or Linux)
+2. Downloads the appropriate FFmpeg binaries from trusted sources
+3. Caches them locally for future use
+4. Falls back to system PATH if you already have FFmpeg installed
+
+You can also pre-download FFmpeg explicitly:
+
+```python
+import clipflow
+
+# Optional: Pre-download FFmpeg (happens automatically on first use anyway)
+clipflow.setup_ffmpeg()
+
+# Check where FFmpeg is located
+print(clipflow.get_ffmpeg_path())
+print(clipflow.get_ffprobe_path())
+```
+
+**Cache location:**
+- **Windows**: `%LOCALAPPDATA%\clipflow\ffmpeg\`
+- **macOS**: `~/Library/Caches/clipflow/ffmpeg/`
+- **Linux**: `~/.cache/clipflow/ffmpeg/`
+
+If you prefer to use your system FFmpeg, ensure it's on your PATH — clipflow will use it automatically.
+
+### Manual FFmpeg Installation (Optional)
+
+If you want to install FFmpeg manually or use a specific version:
 
 ```bash
-# Windows — install ffmpeg via Chocolatey
+# Windows — via Chocolatey
 choco install ffmpeg
 
 # Windows — via winget
 winget install Gyan.FFmpeg
+
+# macOS — via Homebrew
+brew install ffmpeg
+
+# Ubuntu/Debian
+sudo apt install ffmpeg
+
+# Fedora
+sudo dnf install ffmpeg
 ```
 
 ---
@@ -265,6 +308,9 @@ ultra_wide = AspectRatio(21, 9)
 
 `clipflow` builds ffmpeg commands as `list[str]` and runs them with `subprocess.run`.
 
+**FFmpeg Management:**
+On first use, clipflow automatically downloads and caches FFmpeg binaries for your platform. The binaries are stored in a local cache directory and reused on subsequent runs. If you have FFmpeg on your PATH, clipflow will use your system installation instead.
+
 **Stream-copy (default — lossless, fast):**
 ```
 ffmpeg -y -ss <start> -t <duration> -i input.mp4 -c copy output.mp4
@@ -296,6 +342,8 @@ ruff check clipflow/ tests/ && black clipflow/   # lint + format
 mypy clipflow/ --ignore-missing-imports          # strict types
 ```
 
+**Note:** FFmpeg binaries are automatically managed. Tests mock the FFmpeg manager to avoid actual downloads.
+
 **Release:**
 
 ```bash
@@ -304,10 +352,12 @@ git tag v0.2.0 && git push origin v0.2.0
 # publish.yml triggers → PyPI via OIDC trusted publishing
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
 ---
 
 ## License
 
 MIT © [Ronald Isack Gosso](https://github.com/ronaldgosso)
 
-<div align="center"><sub>Built with Python · ffmpeg · subprocess · zero magic</sub></div>
+<div align="center"><sub>Built with Python · auto-managed ffmpeg · subprocess · zero magic</sub></div>

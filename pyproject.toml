@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clipflow"
-version = "0.1.0"
-description = "Trim, compress, and highlight video clips — powered by ffmpeg subprocess"
+version = "0.2.0"
+description = "Trim, compress, and highlight video clips — auto-managed ffmpeg, zero setup"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Ronald Isack Gosso", email = "ronaldgosso@gmail.com" }]
