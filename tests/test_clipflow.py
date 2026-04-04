@@ -22,6 +22,7 @@ import pytest
 
 import clipflow
 from clipflow._ffmpeg import _build_trim_command, build_aspect_ratio_filter
+from clipflow._ffmpeg_manager import reset_cache
 from clipflow.models import (
     COMPRESS_HIGH,
     COMPRESS_MEDIUM,
@@ -156,13 +157,19 @@ class TestClipSpec:
 
 
 class TestBuildTrimCommand:
-    def test_stream_copy_no_compress(self):
-        cmd = _build_trim_command(
-            Path("in.mp4"),
-            Path("out.mp4"),
-            start=60.0,
-            duration=30.0,
-        )
+    def test_stream_copy_no_compress(self, tmp_path: Path):
+        fake_ffmpeg = tmp_path / "ffmpeg.exe"
+        fake_ffmpeg.write_bytes(b"")
+        with patch(
+            "clipflow._ffmpeg.ensure_ffmpeg",
+            return_value=(fake_ffmpeg, fake_ffmpeg),
+        ):
+            cmd = _build_trim_command(
+                Path("in.mp4"),
+                Path("out.mp4"),
+                start=60.0,
+                duration=30.0,
+            )
         assert "-c" in cmd
         copy_idx = cmd.index("-c")
         assert cmd[copy_idx + 1] == "copy"
@@ -171,54 +178,78 @@ class TestBuildTrimCommand:
         i_idx = cmd.index("-i")
         assert ss_idx < i_idx
 
-    def test_compress_mode_seek_after_input(self):
-        cmd = _build_trim_command(
-            Path("in.mp4"),
-            Path("out.mp4"),
-            start=60.0,
-            duration=30.0,
-            crf=23,
-            preset="medium",
-            codec="libx264",
-        )
+    def test_compress_mode_seek_after_input(self, tmp_path: Path):
+        fake_ffmpeg = tmp_path / "ffmpeg.exe"
+        fake_ffmpeg.write_bytes(b"")
+        with patch(
+            "clipflow._ffmpeg.ensure_ffmpeg",
+            return_value=(fake_ffmpeg, fake_ffmpeg),
+        ):
+            cmd = _build_trim_command(
+                Path("in.mp4"),
+                Path("out.mp4"),
+                start=60.0,
+                duration=30.0,
+                crf=23,
+                preset="medium",
+                codec="libx264",
+            )
         # seek must come after -i in re-encode mode
         i_idx = cmd.index("-i")
         ss_idx = cmd.index("-ss", i_idx)  # find -ss AFTER -i
         assert ss_idx > i_idx
 
-    def test_compress_flags_present(self):
-        cmd = _build_trim_command(
-            Path("in.mp4"),
-            Path("out.mp4"),
-            start=0.0,
-            duration=60.0,
-            crf=18,
-            preset="slow",
-            codec="libx265",
-        )
+    def test_compress_flags_present(self, tmp_path: Path):
+        fake_ffmpeg = tmp_path / "ffmpeg.exe"
+        fake_ffmpeg.write_bytes(b"")
+        with patch(
+            "clipflow._ffmpeg.ensure_ffmpeg",
+            return_value=(fake_ffmpeg, fake_ffmpeg),
+        ):
+            cmd = _build_trim_command(
+                Path("in.mp4"),
+                Path("out.mp4"),
+                start=0.0,
+                duration=60.0,
+                crf=18,
+                preset="slow",
+                codec="libx265",
+            )
         assert "-crf" in cmd
         assert cmd[cmd.index("-crf") + 1] == "18"
         assert cmd[cmd.index("-preset") + 1] == "slow"
         assert cmd[cmd.index("-c:v") + 1] == "libx265"
 
-    def test_audio_bitrate(self):
-        cmd = _build_trim_command(
-            Path("in.mp4"),
-            Path("out.mp4"),
-            start=0.0,
-            duration=30.0,
-            crf=23,
-            preset="medium",
-            codec="libx264",
-            audio_bitrate="192k",
-        )
+    def test_audio_bitrate(self, tmp_path: Path):
+        fake_ffmpeg = tmp_path / "ffmpeg.exe"
+        fake_ffmpeg.write_bytes(b"")
+        with patch(
+            "clipflow._ffmpeg.ensure_ffmpeg",
+            return_value=(fake_ffmpeg, fake_ffmpeg),
+        ):
+            cmd = _build_trim_command(
+                Path("in.mp4"),
+                Path("out.mp4"),
+                start=0.0,
+                duration=30.0,
+                crf=23,
+                preset="medium",
+                codec="libx264",
+                audio_bitrate="192k",
+            )
         assert "-b:a" in cmd
         assert cmd[cmd.index("-b:a") + 1] == "192k"
 
-    def test_overwrite_flag(self):
-        cmd = _build_trim_command(
-            Path("in.mp4"), Path("out.mp4"), start=0.0, duration=10.0
-        )
+    def test_overwrite_flag(self, tmp_path: Path):
+        fake_ffmpeg = tmp_path / "ffmpeg.exe"
+        fake_ffmpeg.write_bytes(b"")
+        with patch(
+            "clipflow._ffmpeg.ensure_ffmpeg",
+            return_value=(fake_ffmpeg, fake_ffmpeg),
+        ):
+            cmd = _build_trim_command(
+                Path("in.mp4"), Path("out.mp4"), start=0.0, duration=10.0
+            )
         assert "-y" in cmd
 
 
@@ -282,14 +313,35 @@ def tmp_video(tmp_path: Path) -> Path:
     return v
 
 
+@pytest.fixture(autouse=True)
+def mock_ffmpeg_manager(tmp_path: Path):
+    """
+    Mock ensure_ffmpeg to return fake binary paths.
+    This fixture auto-use applies to all tests in this file.
+    """
+    fake_ffmpeg = tmp_path / "fake_ffmpeg.exe"
+    fake_ffprobe = tmp_path / "fake_ffprobe.exe"
+    fake_ffmpeg.write_bytes(b"")
+    fake_ffprobe.write_bytes(b"")
+
+    with patch(
+        "clipflow._ffmpeg_manager.ensure_ffmpeg",
+        return_value=(fake_ffmpeg, fake_ffprobe),
+    ):
+        yield
+
+
+@pytest.fixture()
+def mock_ffmpeg_manager_reset():
+    """Allow tests to call reset_cache() without affecting other tests."""
+    yield
+    reset_cache()
+
+
 class TestTrimAPI:
     def test_single_clip_ok(self, tmp_video: Path, tmp_path: Path):
         spec = ClipSpec(parse_range("00:00", "01:00"), label="intro")
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffprobe"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()):
             results = clipflow.trim(tmp_video, spec, output_dir=tmp_path / "out")
 
         assert len(results) == 1
@@ -318,10 +370,7 @@ class TestTrimAPI:
             m.stderr = b""
             return m
 
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=fake_run),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=fake_run):
             results = clipflow.trim(tmp_video, spec, output_dir=out_dir)
 
         assert results[0].ok
@@ -332,10 +381,7 @@ class TestTrimAPI:
         clips = [
             ClipSpec(parse_range("00:00", "01:00"), label=f"clip_{i}") for i in range(3)
         ]
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()):
             results = clipflow.trim(tmp_video, clips, output_dir=tmp_path / "out")
 
         assert len(results) == 3
@@ -347,10 +393,7 @@ class TestTrimAPI:
             progress_calls.append((idx, total))
 
         clips = [ClipSpec(parse_range(str(i * 10), str(i * 10 + 10))) for i in range(2)]
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()):
             clipflow.trim(
                 tmp_video, clips, output_dir=tmp_path / "out", on_progress=on_prog
             )
@@ -362,10 +405,7 @@ class TestTrimAPI:
             raise subprocess.CalledProcessError(1, cmd, stderr=b"encoder error")
 
         spec = ClipSpec(parse_range("0", "10"), label="bad")
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=bad_run),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffmpeg"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=bad_run):
             results = clipflow.trim(tmp_video, spec, output_dir=tmp_path / "out")
 
         assert not results[0].ok
@@ -379,10 +419,7 @@ class TestTrimAPI:
 
 class TestInspectAPI:
     def test_returns_video_info(self, tmp_video: Path):
-        with (
-            patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()),
-            patch("clipflow._ffmpeg.shutil.which", return_value="/usr/bin/ffprobe"),
-        ):
+        with patch("clipflow._ffmpeg.subprocess.run", side_effect=_make_fake_run()):
             info = clipflow.inspect(tmp_video)
 
         assert info.width == 1920

@@ -3,6 +3,14 @@ clipflow
 ~~~~~~~~
 Trim, compress, and highlight video clips — powered by ffmpeg subprocess.
 
+FFmpeg binaries are automatically downloaded and managed by clipflow.
+On first use, clipflow will download FFmpeg if not found in the cache
+or system PATH. You can also pre-download FFmpeg explicitly::
+
+    >>> import clipflow
+    >>> clipflow.setup_ffmpeg()  # Optional: pre-download FFmpeg
+    >>> ffmpeg_path, ffprobe_path = clipflow.get_ffmpeg_paths()
+
 Quick start
 -----------
 >>> import clipflow
@@ -14,6 +22,11 @@ Quick start
 True
 """
 
+from clipflow._ffmpeg_manager import (
+    ensure_ffmpeg as setup_ffmpeg,
+    get_ffmpeg_path,
+    get_ffprobe_path,
+)
 from clipflow.core import batch, inspect, trim
 from clipflow.models import (
     AR_1_1,
@@ -40,6 +53,9 @@ __all__ = [
     "batch",
     "parse_range",
     "parse_seconds",
+    "setup_ffmpeg",
+    "get_ffmpeg_path",
+    "get_ffprobe_path",
     # core models
     "ClipSpec",
     "TimeRange",

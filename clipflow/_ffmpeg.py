@@ -13,6 +13,7 @@ Design rules
 - Build the command as a list[str], log it at DEBUG, run it.
 - Capture stderr; surface it only on non-zero exit.
 - Never swallow CalledProcessError — let callers decide.
+- Use bundled/downloaded FFmpeg binaries via _ffmpeg_manager.
 """
 
 from __future__ import annotations
@@ -23,6 +24,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from clipflow._ffmpeg_manager import ensure_ffmpeg
+
 log = logging.getLogger("clipflow")
 
 
@@ -32,22 +35,42 @@ log = logging.getLogger("clipflow")
 
 
 def require_ffmpeg() -> None:
-    """Raise :class:`RuntimeError` if ffmpeg is not on PATH."""
-    if shutil.which("ffmpeg") is None:
+    """Raise :class:`RuntimeError` if ffmpeg is not available."""
+    try:
+        ffmpeg_path, _ = ensure_ffmpeg()
+        if not ffmpeg_path.exists():
+            raise RuntimeError(
+                f"FFmpeg binary not found at: {ffmpeg_path}\n"
+                "Try reinstalling clipflow or install FFmpeg manually from "
+                "https://ffmpeg.org/download.html"
+            )
+    except RuntimeError:
+        raise
+    except Exception as exc:
         raise RuntimeError(
-            "ffmpeg not found on PATH. "
+            f"FFmpeg not found: {exc}\n"
             "Install it from https://ffmpeg.org/download.html "
             "and ensure it is accessible from your terminal."
-        )
+        ) from exc
 
 
 def require_ffprobe() -> None:
-    """Raise :class:`RuntimeError` if ffprobe is not on PATH."""
-    if shutil.which("ffprobe") is None:
+    """Raise :class:`RuntimeError` if ffprobe is not available."""
+    try:
+        _, ffprobe_path = ensure_ffmpeg()
+        if not ffprobe_path.exists():
+            raise RuntimeError(
+                f"FFprobe binary not found at: {ffprobe_path}\n"
+                "Try reinstalling clipflow or install FFmpeg manually from "
+                "https://ffmpeg.org/download.html"
+            )
+    except RuntimeError:
+        raise
+    except Exception as exc:
         raise RuntimeError(
-            "ffprobe not found on PATH. "
+            f"FFprobe not found: {exc}\n"
             "It ships alongside ffmpeg — ensure the full ffmpeg build is installed."
-        )
+        ) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +108,10 @@ def _build_trim_command(
     """
     compress = crf is not None
 
-    cmd: list[str] = ["ffmpeg", "-y"]  # -y overwrites output without prompt
+    # Get the actual ffmpeg binary path
+    ffmpeg_path, _ = ensure_ffmpeg()
+
+    cmd: list[str] = [str(ffmpeg_path), "-y"]  # -y overwrites output without prompt
 
     if not compress:
         # Fast seek BEFORE input — only safe for stream-copy
@@ -176,8 +202,9 @@ def probe(input_path: Path) -> dict:  # type: ignore[type-arg]
         Parsed JSON output with ``format`` and ``streams`` keys.
     """
     require_ffprobe()
+    _, ffprobe_path = ensure_ffmpeg()
     cmd = [
-        "ffprobe",
+        str(ffprobe_path),
         "-v",
         "quiet",
         "-print_format",

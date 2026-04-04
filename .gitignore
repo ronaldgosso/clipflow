@@ -13,6 +13,10 @@ pip-wheel-metadata/
 MANIFEST
 .qwen/
 
+# FFmpeg cache (downloaded binaries)
+# Users get these automatically on first use
+ffmpeg-cache/
+
 # Virtual environments
 .venv/
 venv/
