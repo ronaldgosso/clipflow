@@ -18,7 +18,7 @@ Zero runtime dependencies.
 
 <br />
 
-[![Tests](https://github.com/ronaldgosso/clipflow/actions/workflows/test.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/test.yml)
+[![Tests](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/clipflow?color=f5a623&labelColor=111)](https://pypi.org/project/clipflow/)
 [![Python versions](https://img.shields.io/pypi/pyversions/clipflow?labelColor=111)](https://pypi.org/project/clipflow/)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-4caf7d?labelColor=111)](https://github.com/ronaldgosso/clipflow/actions)
