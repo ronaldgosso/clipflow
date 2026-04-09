@@ -1,0 +1,57 @@
+name: Docker Hub Cleanup
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Delete old Docker images
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_FA: ${{ secrets.DOCKERHUB_FA }}
+          REPOSITORY: ronaldgosso/handscribe
+          KEEP_LAST: 4
+        run: |
+          echo "Fetching tags for ${REPOSITORY}..."
+
+          # Get all tags sorted by newest first
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login/" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_FA}\"}" \
+            | jq -r .token)
+
+          # Fetch all tags (Docker Hub returns max 100 per page, paginate if needed)
+          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/${REPOSITORY}/tags/?page_size=100&ordering=-last_updated" \
+            -H "Authorization: JWT ${TOKEN}")
+
+          TOTAL=$(echo "$TAGS" | jq -r '.count')
+          echo "Total tags found: ${TOTAL}"
+
+          if [ "$TOTAL" -le "$KEEP_LAST" ]; then
+            echo "✓ Only ${TOTAL} tags exist. Nothing to delete (keeping ${KEEP_LAST})."
+            exit 0
+          fi
+
+          # Skip the first KEEP_LAST tags, delete the rest
+          echo "$TAGS" | jq -r '.results[].name' | tail -n +$((KEEP_LAST + 1)) | while read -r TAG; do
+            echo "Deleting tag: ${TAG}"
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+              "https://hub.docker.com/v2/repositories/${REPOSITORY}/tags/${TAG}/" \
+              -H "Authorization: JWT ${TOKEN}")
+
+            if [ "$RESPONSE" = "204" ]; then
+              echo "  ✓ Deleted ${TAG}"
+            else
+              echo "  ✗ Failed to delete ${TAG} (HTTP ${RESPONSE})"
+            fi
+          done
+
+          echo ""
+          echo "✓ Cleanup complete. Kept the ${KEEP_LAST} most recent tags."
