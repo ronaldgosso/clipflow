@@ -14,7 +14,7 @@
 **Trim · Compress · Highlight**
 
 Typed Python API and CLI for video clipping — auto-managed ffmpeg, zero setup.
-Zero runtime dependencies.
+Zero runtime dependencies. Now with Docker support for instant development.
 
 <br />
 
@@ -52,11 +52,30 @@ Most Python video libraries convert frames to NumPy arrays — slow, memory-heav
 
 ## Installation
 
+### Option 1: pip (Traditional)
+
 ```bash
 pip install clipflow
 ```
 
 **Requires:** Python ≥ 3.9
+
+### Option 2: Docker (Zero Setup)
+
+```bash
+# Pull pre-built image
+docker pull ghcr.io/ronaldgosso/clipflow:latest
+
+# Run tests instantly
+docker compose run --rm test
+
+# Use CLI
+docker run --rm -v /path/to/videos:/data ghcr.io/ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
+```
+
+No Python installation required! See [DOCKER.md](DOCKER.md) for complete Docker setup.
+
+---
 
 **FFmpeg:** Automatically downloaded and managed on first use — no manual installation required! 🎉
 
@@ -376,8 +395,8 @@ See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD int
 
 ```bash
 # Bump version in pyproject.toml + clipflow/__init__.py, then:
-git tag v0.2.0 && git push origin v0.2.0
-# publish.yml triggers → PyPI via OIDC trusted publishing
+git tag v0.3.0 && git push origin v0.3.0
+# publish.yml triggers → PyPI via OIDC + Docker image to GHCR
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
