@@ -12,7 +12,7 @@
 
 <br />
 
-<img width="600" alt="clipflow logo" src="https://raw.githubusercontent.com/ronaldgosso/clipflow/main/docs/icon.svg" />
+<img width="100" alt="clipflow logo" src="https://raw.githubusercontent.com/ronaldgosso/clipflow/main/docs/icon.svg" />
 
 </div>
 
