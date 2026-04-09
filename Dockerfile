@@ -21,7 +21,7 @@ RUN apt-get update && \
 
 # Install Python dependencies
 COPY pyproject.toml README.md ./
-RUN pip install --no-cache-dir --prefix=/install ".[dev]"
+RUN pip install --no-cache-dir ".[dev]"
 
 # Copy source code
 COPY . .
@@ -49,13 +49,11 @@ RUN apt-get update && \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local
-
-# Copy application code
+# Copy and install application code
 COPY --from=builder /app/clipflow ./clipflow
 COPY --from=builder /app/pyproject.toml ./pyproject.toml
 COPY --from=builder /app/README.md ./README.md
+RUN pip install --no-cache-dir .
 
 # Create volume mount point for video processing
 VOLUME ["/data"]
