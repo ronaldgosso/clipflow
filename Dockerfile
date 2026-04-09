@@ -33,7 +33,7 @@ RUN ruff check clipflow tests \
     && pytest --tb=short -v --cov=clipflow --cov-report=term
 
 # ---------------------------------------------------------------------------
-# Stage 2 — Production runtime
+# Stage 2 — Production runtime (optimized for size)
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
@@ -43,17 +43,24 @@ LABEL version="0.3.0"
 
 WORKDIR /app
 
-# Install runtime ffmpeg
+# Install only runtime ffmpeg (no dev tools)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-# Copy and install application code
+# Install only runtime dependencies (no dev extras)
+COPY pyproject.toml README.md ./
+RUN pip install --no-cache-dir . && \
+    rm -rf /root/.cache/pip
+
+# Copy application code
 COPY --from=builder /app/clipflow ./clipflow
-COPY --from=builder /app/pyproject.toml ./pyproject.toml
-COPY --from=builder /app/README.md ./README.md
-RUN pip install --no-cache-dir .
+
+# Create cache directory
+RUN mkdir -p /app/.cache
 
 # Create volume mount point for video processing
 VOLUME ["/data"]
@@ -62,9 +69,6 @@ VOLUME ["/data"]
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     CLIPFLOW_CACHE_DIR=/app/.cache
-
-# Create cache directory
-RUN mkdir -p /app/.cache
 
 # Default command
 ENTRYPOINT ["clipflow"]
