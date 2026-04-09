@@ -9,6 +9,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-09
+
+### Changed
+- Migrate docker image registry from GHCR to Docker Hub (`ronaldgosso/clipflow`)
+- Update CI/CD workflows to use Docker Hub with `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets
+- Update all documentation to reference Docker Hub URLs
+
 ## [0.3.0] — 2026-04-09
 
 ### Added
@@ -18,7 +25,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Zero local Python setup required for contributors
   - Pre-configured FFmpeg in all containers
 - **Docker CI/CD automation** — automated container builds and registry pushes
-  - New `docker.yml` workflow for GHCR publishing
+  - New `docker.yml` workflow for Docker Hub publishing
   - Updated `ci.yml` with Docker build & test job
   - GitHub Actions cache optimization for faster builds
   - Multi-platform support (linux/amd64, linux/arm64)
@@ -121,7 +128,8 @@ For users upgrading from 0.1.0:
 - CI: test matrix Python 3.9–3.12 on Ubuntu and Windows via GitHub Actions
 - CD: OIDC trusted publishing to PyPI on version tag push
 
-[Unreleased]: https://github.com/ronaldgosso/clipflow/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ronaldgosso/clipflow/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.3.1
 [0.3.0]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.3.0
 [0.2.1]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.2.1
 [0.2.0]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.2.0

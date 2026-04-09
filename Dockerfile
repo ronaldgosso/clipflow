@@ -39,7 +39,7 @@ FROM python:3.11-slim AS runtime
 
 LABEL maintainer="Ronald Isack Gosso <ronaldgosso@gmail.com>"
 LABEL description="Trim, compress, and highlight video clips — auto-managed ffmpeg"
-LABEL version="0.3.0"
+LABEL version="0.3.1"
 
 WORKDIR /app
 

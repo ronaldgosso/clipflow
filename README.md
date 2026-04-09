@@ -395,7 +395,7 @@ See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD int
 
 ```bash
 # Bump version in pyproject.toml + clipflow/__init__.py, then:
-git tag v0.3.0 && git push origin v0.3.0
+git tag v0.3.1 && git push origin v0.3.1
 # publish.yml triggers → PyPI via OIDC + Docker image to Docker Hub
 ```
 

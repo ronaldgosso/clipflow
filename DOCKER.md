@@ -68,7 +68,7 @@ Images are automatically built and pushed to Docker Hub on every push to `main` 
 docker pull ronaldgosso/clipflow:latest
 
 # Pull specific version
-docker pull ronaldgosso/clipflow:0.3.0
+docker pull ronaldgosso/clipflow:0.3.1
 ```
 
 ### Run production container
