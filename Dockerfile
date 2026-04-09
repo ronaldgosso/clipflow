@@ -21,8 +21,7 @@ RUN apt-get update && \
 
 # Install Python dependencies
 COPY pyproject.toml README.md ./
-RUN pip install --no-cache-dir --prefix=/install \
-    && pip install --no-cache-dir --prefix=/install ".[dev]"
+RUN pip install --no-cache-dir --prefix=/install ".[dev]"
 
 # Copy source code
 COPY . .
@@ -40,7 +39,7 @@ FROM python:3.11-slim AS runtime
 
 LABEL maintainer="Ronald Isack Gosso <ronaldgosso@gmail.com>"
 LABEL description="Trim, compress, and highlight video clips — auto-managed ffmpeg"
-LABEL version="0.2.1"
+LABEL version="0.3.0"
 
 WORKDIR /app
 
