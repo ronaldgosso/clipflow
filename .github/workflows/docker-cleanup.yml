@@ -2,10 +2,16 @@ name: Docker Hub Cleanup
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["Docker"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      keep_last:
+        description: "Number of recent tags to keep"
+        required: false
+        default: "4"
+        type: string
 
 jobs:
   cleanup:
@@ -17,17 +23,17 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_FA: ${{ secrets.DOCKERHUB_FA }}
           REPOSITORY: ronaldgosso/clipflow
-          KEEP_LAST: 4
+          KEEP_LAST: ${{ github.event_name == 'workflow_dispatch' && inputs.keep_last || '4' }}
         run: |
           echo "Fetching tags for ${REPOSITORY}..."
 
-          # Get all tags sorted by newest first
+          # Authenticate with Docker Hub
           TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login/" \
             -H "Content-Type: application/json" \
             -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_FA}\"}" \
             | jq -r .token)
 
-          # Fetch all tags (Docker Hub returns max 100 per page, paginate if needed)
+          # Fetch all tags sorted by newest first
           TAGS=$(curl -s "https://hub.docker.com/v2/repositories/${REPOSITORY}/tags/?page_size=100&ordering=-last_updated" \
             -H "Authorization: JWT ${TOKEN}")
 
