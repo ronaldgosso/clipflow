@@ -45,7 +45,6 @@ docker-compose.yml
 
 # Documentation
 docs/
-*.md
 
 # Examples
 examples/
