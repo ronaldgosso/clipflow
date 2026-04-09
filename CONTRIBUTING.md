@@ -586,7 +586,7 @@ git push origin v0.x.0
 
 # 5. GitHub Actions automatically:
 #    - Publishes to PyPI via OIDC trusted publishing
-#    - Builds and pushes Docker image to ghcr.io/ronaldgosso/clipflow
+#    - Builds and pushes Docker image to Docker Hub (ronaldgosso/clipflow)
 ```
 
 ### Version Numbering

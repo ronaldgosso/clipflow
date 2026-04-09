@@ -19,13 +19,13 @@ Zero runtime dependencies. Now with Docker support for instant development.
 <br />
 
 [![Tests](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml)
-[![Docker](https://github.com/ronaldgosso/clipflow/actions/workflows/docker.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
+[![Docker](https://github.com/ronaldgosso/clipflow/actions/workflows/docker.yml/badge.svg)](https://hub.docker.com/r/ronaldgosso/clipflow)
 [![PyPI version](https://img.shields.io/pypi/v/clipflow?color=f5a623&labelColor=111)](https://pypi.org/project/clipflow/)
 [![Python versions](https://img.shields.io/pypi/pyversions/clipflow?labelColor=111)](https://pypi.org/project/clipflow/)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-4caf7d?labelColor=111)](https://github.com/ronaldgosso/clipflow/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-888?labelColor=111)](LICENSE)
 [![Typed](https://img.shields.io/badge/typed-py.typed-82aaff?labelColor=111)](clipflow/py.typed)
-[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-0969da?labelColor=111&logo=docker)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
+[![Docker Image](https://img.shields.io/badge/docker-ronaldgosso/clipflow-0969da?labelColor=111&logo=docker)](https://hub.docker.com/r/ronaldgosso/clipflow)
 [![Homepage](https://img.shields.io/badge/homepage-ronaldgosso.github.io%2Fclipflow-f5a623?labelColor=111)](https://ronaldgosso.github.io/clipflow)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1LWJ2GmCZLqmKXmJ25lBR5uFX5tmXK7OJ?usp=sharing)
 [![Downloads](https://img.shields.io/pypi/dm/clipflow.svg)](https://pypi.org/project/clipflow/)
@@ -63,14 +63,14 @@ pip install clipflow
 ### Option 2: Docker (Zero Setup)
 
 ```bash
-# Pull pre-built image
-docker pull ghcr.io/ronaldgosso/clipflow:latest
+# Pull pre-built image from Docker Hub
+docker pull ronaldgosso/clipflow:latest
 
 # Run tests instantly
 docker compose run --rm test
 
 # Use CLI
-docker run --rm -v /path/to/videos:/data ghcr.io/ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
+docker run --rm -v /path/to/videos:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
 ```
 
 No Python installation required! See [DOCKER.md](DOCKER.md) for complete Docker setup.
@@ -381,10 +381,10 @@ docker compose run --rm test
 docker compose run --rm dev
 
 # Use CLI via Docker
-docker run --rm -v /path/to/videos:/data clipflow:latest trim video.mp4 00:00-01:00
+docker run --rm -v /path/to/videos:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
 
-# Pull pre-built image from GitHub Container Registry
-docker pull ghcr.io/ronaldgosso/clipflow:latest
+# Pull pre-built image from Docker Hub
+docker pull ronaldgosso/clipflow:latest
 ```
 
 See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD integration and production deployment.
@@ -396,7 +396,7 @@ See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD int
 ```bash
 # Bump version in pyproject.toml + clipflow/__init__.py, then:
 git tag v0.3.0 && git push origin v0.3.0
-# publish.yml triggers → PyPI via OIDC + Docker image to GHCR
+# publish.yml triggers → PyPI via OIDC + Docker image to Docker Hub
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.

@@ -1,8 +1,7 @@
 # Docker Setup for clipflow
 
 [![Docker Build](https://github.com/ronaldgosso/clipflow/actions/workflows/docker.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/docker.yml)
-[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-0969da?logo=docker)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
-[![Image Size](https://img.shields.io/docker/image-size/ronaldgosso/clipflow/latest?label=image%20size)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
+[![Docker Image](https://img.shields.io/badge/docker-ronaldgosso/clipflow-0969da?logo=docker)](https://hub.docker.com/r/ronaldgosso/clipflow)
 
 Complete Docker setup for development, testing, and production deployment with automated CI/CD pipelines.
 
@@ -60,16 +59,16 @@ docker compose run --rm dev
 
 ## Production Deployment
 
-### GitHub Container Registry
+### Docker Hub
 
-Images are automatically built and pushed to GHCR on every push to `main` and releases:
+Images are automatically built and pushed to Docker Hub on every push to `main` and releases:
 
 ```bash
 # Pull latest
-docker pull ghcr.io/ronaldgosso/clipflow:latest
+docker pull ronaldgosso/clipflow:latest
 
 # Pull specific version
-docker pull ghcr.io/ronaldgosso/clipflow:0.2.1
+docker pull ronaldgosso/clipflow:0.3.0
 ```
 
 ### Run production container
@@ -77,7 +76,7 @@ docker pull ghcr.io/ronaldgosso/clipflow:0.2.1
 ```bash
 docker run --rm \
   -v /path/to/videos:/data \
-  ghcr.io/ronaldgosso/clipflow:latest \
+  ronaldgosso/clipflow:latest \
   trim input.mp4 00:00-01:00
 ```
 
@@ -87,7 +86,22 @@ The CI workflow runs automatically on push and PR:
 
 1. **Docker Build & Test** — Builds image and runs full test suite
 2. **Native Matrix Tests** — Tests across Python versions and OS
-3. **Docker Publish** — Pushes to GHCR on releases (via `docker.yml`)
+3. **Docker Publish** — Pushes to Docker Hub on releases (via `docker.yml`)
+
+### Required Secrets
+
+To enable Docker Hub publishing, add these repository secrets:
+
+| Secret | Value |
+|--------|-------|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username (e.g., `ronaldgosso`) |
+| `DOCKERHUB_TOKEN` | Docker Hub access token with Read & Write permissions |
+
+**How to create the token:**
+1. Go to [hub.docker.com](https://hub.docker.com) → Account Settings → Security
+2. Click **New Access Token** → Name it (e.g., `GitHub CI`)
+3. Set permissions: **Read & Write**
+4. Copy the token and add it to GitHub → Settings → Secrets → Actions → New repository secret
 
 ### Trigger manually
 
