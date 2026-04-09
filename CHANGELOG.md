@@ -11,10 +11,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.3.1] — 2026-04-09
 
+### Added
+- **Docker Hub cleanup workflow** — auto-deletes old tags, keeps last 4
+- **Docker Hub description sync** — auto-syncs README_DOCKER.md on push
+- **Project icon** — SVG icon for Docker Hub and landing page
+
 ### Changed
-- Migrate docker image registry from GHCR to Docker Hub (`ronaldgosso/clipflow`)
-- Update CI/CD workflows to use Docker Hub with `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets
-- Update all documentation to reference Docker Hub URLs
+- Normalize all CI workflows for consistency and correct triggers
+  - CI: removed duplicate Docker build, simplified test matrix
+  - Docker: use `DOCKERHUB_FA` token, trigger on PyPI publish completion
+  - Docker Cleanup: trigger on Docker workflow completion (not CI)
+- Update documentation to reference `README_DOCKER.md` (replaces `DOCKER.md`)
 
 ## [0.3.0] — 2026-04-09
 

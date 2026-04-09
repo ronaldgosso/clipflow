@@ -79,25 +79,20 @@ pip install pytest pytest-cov ruff black mypy
 #### Option 2: Docker (Recommended)
 
 ```bash
+# Pull pre-built image
+docker pull ronaldgosso/clipflow:latest
+
 # Run full test suite — no local Python needed
-docker compose run --rm test
-
-# Interactive development shell with hot-reload
-docker compose run --rm dev
-
-# Quick lint check
-docker compose run --rm lint
-
-# Use CLI directly
-docker run --rm -v $(pwd)/data:/data clipflow:latest trim video.mp4 00:00-01:00
+docker run --rm -v $(pwd):/app -w /app ronaldgosso/clipflow:latest \
+  bash -c "ruff check clipflow tests && black --check clipflow tests && mypy clipflow && pytest -v"
 ```
 
-**Benefits of Docker development:**
+**Benefits of Docker:**
 - Zero local Python installation required
 - Consistent environment across machines
 - FFmpeg pre-installed in the container
 - Isolated test runs with no local pollution
-- See [DOCKER.md](DOCKER.md) for complete Docker documentation
+- See [README_DOCKER.md](README_DOCKER.md) or [Docker Hub](https://hub.docker.com/r/ronaldgosso/clipflow) for complete Docker documentation
 
 ### Verification
 
@@ -126,54 +121,35 @@ All checks should pass with zero errors.
 
 ## Docker Development
 
-Clipflow provides a complete Docker-based development workflow with zero local Python setup required.
+Clipflow provides Docker images for instant development.
 
-### Docker Compose Services
-
-| Service | Purpose | Command |
-|---------|---------|---------|
-| `test` | Run full CI suite | `docker compose run --rm test` |
-| `lint` | Quick lint check | `docker compose run --rm lint` |
-| `dev` | Interactive shell | `docker compose run --rm dev` |
-| `app` | CLI usage | `docker run --rm clipflow:latest trim ...` |
-
-### Running Tests
+### Quick Development Loop
 
 ```bash
-# Full test suite (tests + lint + type check + coverage)
-docker compose run --rm test
+# Pull the latest image
+docker pull ronaldgosso/clipflow:latest
+
+# Run tests inside the container
+docker run --rm -v $(pwd):/app -w /app ronaldgosso/clipflow:latest \
+  bash -c "ruff check clipflow tests && black --check clipflow tests && mypy clipflow && pytest -v"
+
+# Use the CLI interactively
+docker run --rm -it -v $(pwd)/data:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
 ```
 
-### Interactive Development
-
-```bash
-# Start dev shell with hot-reload
-docker compose run --rm dev
-
-# Inside the container:
-cd /app
-pytest
-ruff check clipflow tests
-black clipflow tests
-mypy clipflow
-```
-
-### Volume Mounts
-
-- `./data` → `/data` — Mount your video files for testing
-- `.cache` volumes — Persist FFmpeg cache across runs
-
-### Building Images
+### Building Locally
 
 ```bash
 # Build production image
 docker build -t clipflow:latest .
 
-# Build development image only
-docker build --target builder -t clipflow:dev .
+# Build and run tests (uses builder stage)
+docker build --target builder -t clipflow:builder .
+docker run --rm -v $(pwd):/app -w /app clipflow:builder \
+  bash -c "ruff check clipflow tests && black --check clipflow tests && mypy clipflow && pytest -v"
 ```
 
-See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD integration and production deployment.
+See [README_DOCKER.md](README_DOCKER.md) or [Docker Hub](https://hub.docker.com/r/ronaldgosso/clipflow) for complete Docker documentation including CI/CD integration and production deployment.
 
 ---
 
@@ -289,14 +265,9 @@ pytest tests/test_clipflow.py::TestYourFeature::test_specific_case
 ### Running Tests in Docker
 
 ```bash
-# Full CI suite (lint + types + tests + coverage)
-docker compose run --rm test
-
-# This runs exactly what CI runs:
-# - ruff check clipflow tests
-# - black --check clipflow tests
-# - mypy clipflow
-# - pytest --tb=short -v --cov=clipflow --cov-report=term
+# Full test suite (lint + types + tests + coverage)
+docker run --rm -v $(pwd):/app -w /app ronaldgosso/clipflow:latest \
+  bash -c "ruff check clipflow tests && black --check clipflow tests && mypy clipflow && pytest --tb=short -v --cov=clipflow --cov-report=term"
 ```
 
 ### Test Guidelines
@@ -528,10 +499,10 @@ Before submitting a PR:
 - [ ] Coverage maintained or improved (>80%)
 - [ ] Docstrings added/updated
 - [ ] CHANGELOG.md updated
-- [ ] Documentation updated (README, examples, DOCKER.md if applicable)
+- [ ] Documentation updated (README, examples, README_DOCKER.md if applicable)
 - [ ] Commit messages follow conventions
 - [ ] Branch is up-to-date with main
-- [ ] Tested locally or via Docker (`docker compose run --rm test`)
+- [ ] Tested locally or via Docker (`docker run --rm -v $(pwd):/app -w /app ronaldgosso/clipflow:latest pytest`)
 
 ### PR Description Template
 
@@ -563,7 +534,7 @@ Brief description of changes
 
 ### Review Process
 
-1. **Automated CI checks** must pass (Docker build + native matrix tests)
+1. **Automated CI checks** must pass (lint + type + test matrix on Python 3.9–3.12)
 2. **At least one maintainer review** required
 3. **Address feedback** and push updates
 4. **Merge** once approved
@@ -585,8 +556,10 @@ git tag v0.x.0
 git push origin v0.x.0
 
 # 5. GitHub Actions automatically:
-#    - Publishes to PyPI via OIDC trusted publishing
-#    - Builds and pushes Docker image to Docker Hub (ronaldgosso/clipflow)
+#    - Publish to PyPI via OIDC trusted publishing (publish.yml)
+#    - Build and push Docker image to Docker Hub (docker.yml)
+#    - Sync README_DOCKER.md to Docker Hub description (docker-description.yml)
+#    - Deploy landing page to GitHub Pages (pages.yml)
 ```
 
 ### Version Numbering

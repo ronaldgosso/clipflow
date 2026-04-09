@@ -14,7 +14,7 @@
 **Trim · Compress · Highlight**
 
 Typed Python API and CLI for video clipping — auto-managed ffmpeg, zero setup.
-Zero runtime dependencies. Now with Docker support for instant development.
+Zero runtime dependencies. Docker-ready for instant development.
 
 <br />
 
