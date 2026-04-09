@@ -9,6 +9,37 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-09
+
+### Added
+- **Docker support** — full containerization for development, testing, and production
+  - Multi-stage Dockerfile with optimized builds
+  - Docker Compose with 4 services: `app`, `dev`, `test`, `lint`
+  - Zero local Python setup required for contributors
+  - Pre-configured FFmpeg in all containers
+- **Docker CI/CD automation** — automated container builds and registry pushes
+  - New `docker.yml` workflow for GHCR publishing
+  - Updated `ci.yml` with Docker build & test job
+  - GitHub Actions cache optimization for faster builds
+  - Multi-platform support (linux/amd64, linux/arm64)
+- Comprehensive Docker documentation:
+  - `DOCKER.md` — complete setup and usage guide
+  - Updated `README.md` with Docker quick start
+  - Updated `CONTRIBUTING.md` with Docker development workflows
+- `.dockerignore` for optimized build context
+
+### Changed
+- Development workflow now supports both local and Docker environments
+- CI runs Docker builds in parallel with native matrix tests
+- Release process now includes automatic Docker image publishing
+
+### Migration Guide
+For users upgrading from 0.2.x:
+- **No breaking changes** — all existing functionality remains the same
+- **New option**: Use Docker for zero-setup development
+- **CI users**: Docker builds run automatically on PRs
+- **Production**: Pull from `ghcr.io/ronaldgosso/clipflow` instead of building locally
+
 ## [0.2.1] — 2026-04-05
 
 ### Added
@@ -90,6 +121,8 @@ For users upgrading from 0.1.0:
 - CI: test matrix Python 3.9–3.12 on Ubuntu and Windows via GitHub Actions
 - CD: OIDC trusted publishing to PyPI on version tag push
 
-[Unreleased]: https://github.com/ronaldgosso/clipflow/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ronaldgosso/clipflow/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.3.0
+[0.2.1]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.2.1
 [0.2.0]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ronaldgosso/clipflow/releases/tag/v0.1.0

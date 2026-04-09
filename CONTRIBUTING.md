@@ -11,17 +11,18 @@ This document provides guidelines and instructions for contributing. Please read
 1. [Code of Conduct](#code-of-conduct)
 2. [Getting Started](#getting-started)
 3. [Development Setup](#development-setup)
-4. [Project Structure](#project-structure)
-5. [Making Changes](#making-changes)
-6. [Testing](#testing)
-7. [Code Style](#code-style)
-8. [Type Checking](#type-checking)
-9. [Documentation](#documentation)
-10. [Git Workflow](#git-workflow)
-11. [Pull Request Process](#pull-request-process)
-12. [Releasing](#releasing)
-13. [Reporting Bugs](#reporting-bugs)
-14. [Requesting Features](#requesting-features)
+4. [Docker Development](#docker-development)
+5. [Project Structure](#project-structure)
+6. [Making Changes](#making-changes)
+7. [Testing](#testing)
+8. [Code Style](#code-style)
+9. [Type Checking](#type-checking)
+10. [Documentation](#documentation)
+11. [Git Workflow](#git-workflow)
+12. [Pull Request Process](#pull-request-process)
+13. [Releasing](#releasing)
+14. [Reporting Bugs](#reporting-bugs)
+15. [Requesting Features](#requesting-features)
 
 ---
 
@@ -65,6 +66,8 @@ pytest
 
 ### Installing Dependencies
 
+#### Option 1: Local Installation
+
 ```bash
 # Install with all dev dependencies
 pip install -e ".[dev]"
@@ -72,6 +75,29 @@ pip install -e ".[dev]"
 # Individual tools
 pip install pytest pytest-cov ruff black mypy
 ```
+
+#### Option 2: Docker (Recommended)
+
+```bash
+# Run full test suite — no local Python needed
+docker compose run --rm test
+
+# Interactive development shell with hot-reload
+docker compose run --rm dev
+
+# Quick lint check
+docker compose run --rm lint
+
+# Use CLI directly
+docker run --rm -v $(pwd)/data:/data clipflow:latest trim video.mp4 00:00-01:00
+```
+
+**Benefits of Docker development:**
+- Zero local Python installation required
+- Consistent environment across machines
+- FFmpeg pre-installed in the container
+- Isolated test runs with no local pollution
+- See [DOCKER.md](DOCKER.md) for complete Docker documentation
 
 ### Verification
 
@@ -95,6 +121,59 @@ mypy clipflow/ --ignore-missing-imports
 ```
 
 All checks should pass with zero errors.
+
+---
+
+## Docker Development
+
+Clipflow provides a complete Docker-based development workflow with zero local Python setup required.
+
+### Docker Compose Services
+
+| Service | Purpose | Command |
+|---------|---------|---------|
+| `test` | Run full CI suite | `docker compose run --rm test` |
+| `lint` | Quick lint check | `docker compose run --rm lint` |
+| `dev` | Interactive shell | `docker compose run --rm dev` |
+| `app` | CLI usage | `docker run --rm clipflow:latest trim ...` |
+
+### Running Tests
+
+```bash
+# Full test suite (tests + lint + type check + coverage)
+docker compose run --rm test
+```
+
+### Interactive Development
+
+```bash
+# Start dev shell with hot-reload
+docker compose run --rm dev
+
+# Inside the container:
+cd /app
+pytest
+ruff check clipflow tests
+black clipflow tests
+mypy clipflow
+```
+
+### Volume Mounts
+
+- `./data` → `/data` — Mount your video files for testing
+- `.cache` volumes — Persist FFmpeg cache across runs
+
+### Building Images
+
+```bash
+# Build production image
+docker build -t clipflow:latest .
+
+# Build development image only
+docker build --target builder -t clipflow:dev .
+```
+
+See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD integration and production deployment.
 
 ---
 
@@ -188,7 +267,7 @@ class TestYourFeature:
 
 ## Testing
 
-### Running Tests
+### Running Tests Locally
 
 ```bash
 # Run all tests
@@ -205,6 +284,19 @@ pytest tests/test_clipflow.py::TestYourFeature
 
 # Run specific test
 pytest tests/test_clipflow.py::TestYourFeature::test_specific_case
+```
+
+### Running Tests in Docker
+
+```bash
+# Full CI suite (lint + types + tests + coverage)
+docker compose run --rm test
+
+# This runs exactly what CI runs:
+# - ruff check clipflow tests
+# - black --check clipflow tests
+# - mypy clipflow
+# - pytest --tb=short -v --cov=clipflow --cov-report=term
 ```
 
 ### Test Guidelines
@@ -436,9 +528,10 @@ Before submitting a PR:
 - [ ] Coverage maintained or improved (>80%)
 - [ ] Docstrings added/updated
 - [ ] CHANGELOG.md updated
-- [ ] Documentation updated (README, examples)
+- [ ] Documentation updated (README, examples, DOCKER.md if applicable)
 - [ ] Commit messages follow conventions
 - [ ] Branch is up-to-date with main
+- [ ] Tested locally or via Docker (`docker compose run --rm test`)
 
 ### PR Description Template
 
@@ -470,7 +563,7 @@ Brief description of changes
 
 ### Review Process
 
-1. **Automated CI checks** must pass
+1. **Automated CI checks** must pass (Docker build + native matrix tests)
 2. **At least one maintainer review** required
 3. **Address feedback** and push updates
 4. **Merge** once approved
@@ -491,7 +584,9 @@ git commit -m "chore: bump version to 0.x.0"
 git tag v0.x.0
 git push origin v0.x.0
 
-# 5. GitHub Actions automatically publishes to PyPI
+# 5. GitHub Actions automatically:
+#    - Publishes to PyPI via OIDC trusted publishing
+#    - Builds and pushes Docker image to ghcr.io/ronaldgosso/clipflow
 ```
 
 ### Version Numbering

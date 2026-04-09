@@ -1,0 +1,97 @@
+# =============================================================================
+# clipflow — Docker Compose for development
+# =============================================================================
+services:
+  # -----------------------------------------------------------------------
+  # Main application service
+  # -----------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      target: runtime
+      dockerfile: Dockerfile
+    volumes:
+      # Mount local videos directory for processing
+      - ./data:/data
+      # Persist ffmpeg cache across containers
+      - clipflow-cache:/app/.cache
+    working_dir: /data
+    environment:
+      - CLIPFLOW_CACHE_DIR=/app/.cache
+    # Allow running arbitrary commands (default: --help)
+    command: --help
+
+  # -----------------------------------------------------------------------
+  # Development service with hot-reload
+  # -----------------------------------------------------------------------
+  dev:
+    build:
+      context: .
+      target: builder
+      dockerfile: Dockerfile
+    volumes:
+      # Mount source code for live development
+      - .:/app
+      # Mount local videos directory
+      - ./data:/data
+      # Persist caches
+      - clipflow-cache:/app/.cache
+      - pytest-cache:/app/.pytest_cache
+      - mypy-cache:/app/.mypy_cache
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CLIPFLOW_CACHE_DIR=/app/.cache
+    # Keep container running for interactive use
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # -----------------------------------------------------------------------
+  # CI test runner
+  # -----------------------------------------------------------------------
+  test:
+    build:
+      context: .
+      target: builder
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - clipflow-cache:/app/.cache
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Run full test suite
+    command: >
+      bash -c "
+        ruff check clipflow tests &&
+        black --check clipflow tests &&
+        mypy clipflow &&
+        pytest --tb=short -v --cov=clipflow --cov-report=term
+      "
+
+  # -----------------------------------------------------------------------
+  # Lint-only quick check
+  # -----------------------------------------------------------------------
+  lint:
+    build:
+      context: .
+      target: builder
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      bash -c "
+        ruff check clipflow tests &&
+        black --check clipflow tests &&
+        mypy clipflow
+      "
+
+# ---------------------------------------------------------------------------
+# Named volumes for persistence
+# ---------------------------------------------------------------------------
+volumes:
+  clipflow-cache:
+  pytest-cache:
+  mypy-cache:

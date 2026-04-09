@@ -7,6 +7,45 @@ on:
     branches: ["main"]
 
 jobs:
+  # -----------------------------------------------------------------------
+  # Docker build & test (fast path — ensures containerization works)
+  # -----------------------------------------------------------------------
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          target: builder
+          push: false
+          load: true
+          tags: clipflow:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests in Docker
+        run: |
+          docker run --rm clipflow:latest \
+            bash -c "
+              ruff check clipflow tests &&
+              black --check clipflow tests &&
+              mypy clipflow &&
+              pytest --tb=short -v --cov=clipflow --cov-report=term
+            "
+
+  # -----------------------------------------------------------------------
+  # Native matrix tests (ensures cross-platform compatibility)
+  # -----------------------------------------------------------------------
   quality:
     name: Lint & Test (Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}

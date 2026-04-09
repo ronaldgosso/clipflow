@@ -19,11 +19,13 @@ Zero runtime dependencies.
 <br />
 
 [![Tests](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/actions/workflows/ci.yml)
+[![Docker](https://github.com/ronaldgosso/clipflow/actions/workflows/docker.yml/badge.svg)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
 [![PyPI version](https://img.shields.io/pypi/v/clipflow?color=f5a623&labelColor=111)](https://pypi.org/project/clipflow/)
 [![Python versions](https://img.shields.io/pypi/pyversions/clipflow?labelColor=111)](https://pypi.org/project/clipflow/)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-4caf7d?labelColor=111)](https://github.com/ronaldgosso/clipflow/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-888?labelColor=111)](LICENSE)
 [![Typed](https://img.shields.io/badge/typed-py.typed-82aaff?labelColor=111)](clipflow/py.typed)
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-0969da?labelColor=111&logo=docker)](https://github.com/ronaldgosso/clipflow/pkgs/container/clipflow)
 [![Homepage](https://img.shields.io/badge/homepage-ronaldgosso.github.io%2Fclipflow-f5a623?labelColor=111)](https://ronaldgosso.github.io/clipflow)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1LWJ2GmCZLqmKXmJ25lBR5uFX5tmXK7OJ?usp=sharing)
 [![Downloads](https://img.shields.io/pypi/dm/clipflow.svg)](https://pypi.org/project/clipflow/)
@@ -335,6 +337,8 @@ The entire subprocess layer is isolated in `clipflow/_ffmpeg.py` — no other mo
 
 ## Development
 
+### Local Setup
+
 ```bash
 git clone https://github.com/ronaldgosso/clipflow.git
 cd clipflow
@@ -345,6 +349,26 @@ pytest --cov=clipflow --cov-report=term          # coverage (>90%)
 ruff check clipflow/ tests/ && black clipflow/   # lint + format
 mypy clipflow/ --ignore-missing-imports          # strict types
 ```
+
+### Docker Setup
+
+No Python installation required! Use Docker for instant development:
+
+```bash
+# Run full test suite in Docker
+docker compose run --rm test
+
+# Development shell with hot-reload
+docker compose run --rm dev
+
+# Use CLI via Docker
+docker run --rm -v /path/to/videos:/data clipflow:latest trim video.mp4 00:00-01:00
+
+# Pull pre-built image from GitHub Container Registry
+docker pull ghcr.io/ronaldgosso/clipflow:latest
+```
+
+See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD integration and production deployment.
 
 **Note:** FFmpeg binaries are automatically managed. Tests mock the FFmpeg manager to avoid actual downloads.
 
