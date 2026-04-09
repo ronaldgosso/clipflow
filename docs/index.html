@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>clipflow — Python video trimming via auto-managed ffmpeg</title>
   <meta name="description"
-    content="Trim, compress, and highlight video clips with a clean Python API. FFmpeg auto-downloaded on first use. Zero manual setup." />
+    content="Trim, compress, and highlight video clips with a clean Python API. FFmpeg auto-downloaded on first use. Zero manual setup. Docker-ready." />
   <meta property="og:title" content="clipflow" />
   <meta property="og:description"
     content="Python video trimming, compression & highlights. FFmpeg auto-managed — zero setup required." />
   <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -971,21 +972,24 @@
       <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
     </ul>
     <a class="nav-pip" href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">
-      PyPI v0.2.0
+      PyPI v0.3.1
     </a>
   </nav>
 
   <!-- ── Hero ─────────────────────────────────────────────────────────── -->
   <div class="hero">
     <div>
-      <div class="hero-eyebrow">Python · auto-managed ffmpeg · zero setup</div>
+      <div class="hero-eyebrow">Python · auto-managed ffmpeg · zero setup · Docker-ready</div>
       <h1>clip<em>flow</em></h1>
       <p class="hero-sub">
         Trim, compress, and highlight video clips with a clean, typed Python API.
         FFmpeg binaries auto-downloaded on first use — no manual installation, no configuration.
+        Run locally or via Docker in seconds.
       </p>
       <div class="hero-actions">
         <a href="#api" class="btn-primary">↓ Quick start</a>
+        <a href="https://hub.docker.com/r/ronaldgosso/clipflow" class="btn-ghost" target="_blank" rel="noopener">Docker
+          ↗</a>
         <a href="https://github.com/ronaldgosso/clipflow" class="btn-ghost" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
     </div>
@@ -1027,6 +1031,9 @@
       <span class="install-label">Install</span>
       <span class="install-cmd"><span class="dollar">$</span>pip install clipflow</span>
       <button class="copy-btn" id="copyBtn" onclick="copyInstall()">copy</button>
+      <span class="install-label" style="margin-left:1.5rem;">Docker</span>
+      <span class="install-cmd" style="color:var(--amber);"><span class="dollar">$</span>docker pull
+        ronaldgosso/clipflow:latest</span>
       <span class="install-label" style="margin-left:1.5rem;">Requires</span>
       <span class="install-cmd" style="color:var(--muted);">Python ≥ 3.9 &nbsp;·&nbsp; FFmpeg auto-installed ✨</span>
     </div>
@@ -1081,6 +1088,14 @@
         <div class="feature-desc">Duration, resolution, fps, codec, file size — returned as a typed <code
             style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">VideoInfo</code> dataclass via ffprobe.
           Works on any format ffmpeg supports.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">DOCKER</div>
+        <div class="feature-title">Docker-ready</div>
+        <div class="feature-desc">Multi-stage build optimized for size (~150MB). Pull from Docker Hub and start
+          processing videos instantly — no Python installation, no configuration. <code
+            style="font-family:var(--mono);font-size:0.8em;color:var(--amber)">docker pull ronaldgosso/clipflow</code>
+        </div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">BATCH</div>
@@ -1476,9 +1491,10 @@ all_results <span class="pu">=</span> clipflow.<span class="fn">batch</span><spa
   <footer>
     <div class="footer-inner">
       <div class="footer-logo">clip<span>flow</span> <span
-          style="color:var(--faint);margin-left:0.5rem;font-size:0.75rem;">v0.2.0</span></div>
+          style="color:var(--faint);margin-left:0.5rem;font-size:0.75rem;">v0.3.1</span></div>
       <ul class="footer-links">
         <li><a href="https://pypi.org/project/clipflow/" target="_blank" rel="noopener">PyPI ↗</a></li>
+        <li><a href="https://hub.docker.com/r/ronaldgosso/clipflow" target="_blank" rel="noopener">Docker ↗</a></li>
         <li><a href="https://github.com/ronaldgosso/clipflow" target="_blank" rel="noopener">GitHub ↗</a></li>
         <li><a href="https://github.com/ronaldgosso/clipflow/blob/main/CHANGELOG.md" target="_blank"
             rel="noopener">Changelog ↗</a></li>

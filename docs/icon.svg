@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f1a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f5a623;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c4811a;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGrad)"/>
+
+  <!-- Film frame border -->
+  <rect x="80" y="100" width="352" height="280" rx="12" fill="none" stroke="#2a2a3a" stroke-width="4"/>
+
+  <!-- Play/trim triangle -->
+  <polygon points="210,180 210,300 320,240" fill="url(#amberGrad)" filter="url(#glow)"/>
+
+  <!-- Timeline bars (left) -->
+  <rect x="100" y="400" width="40" height="24" rx="4" fill="#f5a623" opacity="0.9"/>
+  <rect x="150" y="400" width="60" height="24" rx="4" fill="#f5a623" opacity="0.7"/>
+  <rect x="220" y="400" width="80" height="24" rx="4" fill="#f5a623" opacity="0.85"/>
+  <rect x="310" y="400" width="50" height="24" rx="4" fill="#f5a623" opacity="0.6"/>
+  <rect x="370" y="400" width="40" height="24" rx="4" fill="#f5a623" opacity="0.75"/>
+
+  <!-- Timeline bars (right, smaller) -->
+  <rect x="100" y="440" width="70" height="16" rx="3" fill="#888" opacity="0.4"/>
+  <rect x="180" y="440" width="50" height="16" rx="3" fill="#888" opacity="0.3"/>
+  <rect x="240" y="440" width="90" height="16" rx="3" fill="#888" opacity="0.45"/>
+  <rect x="340" y="440" width="60" height="16" rx="3" fill="#888" opacity="0.35"/>
+
+  <!-- Flow lines (representing clipflow) -->
+  <path d="M 100 424 Q 256 450 412 424" fill="none" stroke="#f5a623" stroke-width="2" opacity="0.5"/>
+
+  <!-- Top accent line -->
+  <rect x="200" y="60" width="112" height="6" rx="3" fill="url(#amberGrad)"/>
+
+  <!-- Small dots (film holes) -->
+  <circle cx="100" cy="120" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="150" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="180" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="210" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="240" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="270" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="300" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="330" r="6" fill="#2a2a3a"/>
+  <circle cx="100" cy="360" r="6" fill="#2a2a3a"/>
+
+  <circle cx="412" cy="120" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="150" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="180" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="210" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="240" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="270" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="300" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="330" r="6" fill="#2a2a3a"/>
+  <circle cx="412" cy="360" r="6" fill="#2a2a3a"/>
+
+  <!-- Subtle C in corner (clip) -->
+  <text x="380" y="80" font-family="monospace" font-size="28" font-weight="600" fill="#f5a623" opacity="0.6" letter-spacing="-1">clip</text>
+</svg>

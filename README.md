@@ -63,17 +63,11 @@ pip install clipflow
 ### Option 2: Docker (Zero Setup)
 
 ```bash
-# Pull pre-built image from Docker Hub
 docker pull ronaldgosso/clipflow:latest
-
-# Run tests instantly
-docker compose run --rm test
-
-# Use CLI
 docker run --rm -v /path/to/videos:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
 ```
 
-No Python installation required! See [DOCKER.md](DOCKER.md) for complete Docker setup.
+See [README_DOCKER.md](README_DOCKER.md) or [Docker Hub](https://hub.docker.com/r/ronaldgosso/clipflow) for complete Docker documentation.
 
 ---
 
@@ -371,23 +365,17 @@ mypy clipflow/ --ignore-missing-imports          # strict types
 
 ### Docker Setup
 
-No Python installation required! Use Docker for instant development:
+Use Docker for instant development with zero Python installation:
 
 ```bash
-# Run full test suite in Docker
-docker compose run --rm test
-
-# Development shell with hot-reload
-docker compose run --rm dev
-
-# Use CLI via Docker
-docker run --rm -v /path/to/videos:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
-
-# Pull pre-built image from Docker Hub
+# Pull pre-built image
 docker pull ronaldgosso/clipflow:latest
+
+# Run CLI
+docker run --rm -v /path/to/videos:/data ronaldgosso/clipflow:latest trim video.mp4 00:00-01:00
 ```
 
-See [DOCKER.md](DOCKER.md) for complete Docker documentation including CI/CD integration and production deployment.
+For complete Docker documentation including Docker Compose, CI/CD integration, and production deployment, see [README_DOCKER.md](README_DOCKER.md) or [Docker Hub](https://hub.docker.com/r/ronaldgosso/clipflow).
 
 **Note:** FFmpeg binaries are automatically managed. Tests mock the FFmpeg manager to avoid actual downloads.
 

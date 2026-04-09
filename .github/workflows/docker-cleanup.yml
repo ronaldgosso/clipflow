@@ -16,7 +16,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_FA: ${{ secrets.DOCKERHUB_FA }}
-          REPOSITORY: ronaldgosso/handscribe
+          REPOSITORY: ronaldgosso/clipflow
           KEEP_LAST: 4
         run: |
           echo "Fetching tags for ${REPOSITORY}..."
